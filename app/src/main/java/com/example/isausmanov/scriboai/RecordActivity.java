@@ -83,20 +83,16 @@ public class RecordActivity extends AppCompatActivity {
         doneBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if( !isPlaying && fileName != null ){
+               /* if( !isPlaying && fileName != null ){
                     isPlaying = true;
                     startPlaying();
                 }else{
                     isPlaying = false;
                     stopPlaying();
-                }
+                } */
+                startPlaying();
             }
         });
-
-
-
-
-
 
     }
 
