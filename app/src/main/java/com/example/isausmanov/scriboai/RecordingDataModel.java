@@ -2,17 +2,23 @@ package com.example.isausmanov.scriboai;
 
 public class RecordingDataModel {
     private String name;
+    private String date;
     private long duration;
     private String duration_s;
 
-    public RecordingDataModel(String name, long duration) {
+    public RecordingDataModel(String name, String date, long duration) {
         this.name = name;
+        this.date = date;
         this.duration = duration;
         this.duration_s = formatSeconds(duration);
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getDate() {
+        return date;
     }
 
     public String getDuration() {

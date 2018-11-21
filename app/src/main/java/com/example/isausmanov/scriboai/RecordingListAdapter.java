@@ -19,6 +19,7 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
     // View lookup cache
     private static class ViewHolder {
         TextView name;
+        TextView date;
         TextView duration;
         ImageView icon;
     }
@@ -27,7 +28,6 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
         super(context, R.layout.recording_list_item, data);
         this.data = data;
         this.context = context;
-
     }
 
     @Override
@@ -61,6 +61,7 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
             LayoutInflater inflater = LayoutInflater.from(getContext());
             convertView = inflater.inflate(R.layout.recording_list_item, parent, false);
             viewHolder.name = convertView.findViewById(R.id.recording_name);
+            viewHolder.date = convertView.findViewById(R.id.recording_date);
             viewHolder.duration = convertView.findViewById(R.id.recording_duration);
             viewHolder.icon = convertView.findViewById(R.id.list_item_image);
 
