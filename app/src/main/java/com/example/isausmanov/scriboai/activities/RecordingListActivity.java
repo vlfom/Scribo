@@ -1,11 +1,16 @@
-package com.example.isausmanov.scriboai;
+package com.example.isausmanov.scriboai.activities;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.example.isausmanov.scriboai.R;
+import com.example.isausmanov.scriboai.RecordingDataModel;
+import com.example.isausmanov.scriboai.RecordingListAdapter;
 
 import java.util.ArrayList;
 
@@ -18,7 +23,7 @@ public class RecordingListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_records_list);
+        setContentView(R.layout.activity_recording_list);
 
         listView = findViewById(R.id.recording_list);
 
@@ -45,6 +50,9 @@ public class RecordingListActivity extends AppCompatActivity {
                 Toast.makeText(getBaseContext(),
                         dataModel.getName() + "\nDuration: " + dataModel.getDuration(),
                         Toast.LENGTH_SHORT).show();
+
+                Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
+                startActivity(i);
             }
         });
     }

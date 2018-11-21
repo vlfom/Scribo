@@ -1,4 +1,4 @@
-package com.example.isausmanov.scriboai;
+package com.example.isausmanov.scriboai.activities;
 
 import android.Manifest;
 import android.content.Intent;
@@ -17,6 +17,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.Toast;
+
+import com.example.isausmanov.scriboai.R;
 
 import java.io.File;
 import java.io.IOException;
