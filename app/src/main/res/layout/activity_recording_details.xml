@@ -8,7 +8,7 @@
     android:orientation="vertical">
 
     <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
+        android:id="@+id/recording_details_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimaryDark"
@@ -45,16 +45,55 @@
         android:layout_weight="0"
         android:gravity="center"
         android:orientation="vertical">
-        <LinearLayout
-            android:layout_width="330dp"
-            android:layout_height="2dp"
-            android:background="#eee">
-        </LinearLayout>
-        <Button
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/ic_baseline_play_circle_outline"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="10dp"/>
+
+        <SeekBar
+            android:id="@+id/recording_details_seek_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <Button
+                android:id="@+id/recording_details_play_button"
+                android:onClick="startPlayback"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_baseline_play_circle_outline"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="10dp"
+                android:layout_marginStart="120dp"/>
+
+            <Button
+                android:id="@+id/recording_details_pause_button"
+                android:onClick="pausePlayback"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_baseline_pause_circle_outline"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="10dp"
+                android:layout_marginStart="180dp"/>
+
+            <TextView
+                android:id="@+id/recording_details_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11dp"
+                android:textColor="#aaa"
+                android:text="00:00:00"
+                android:layout_marginStart="20dp"/>
+
+            <TextView
+                android:id="@+id/recording_details_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11dp"
+                android:textColor="#aaa"
+                android:text="00:12:20"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="20dp"/>
+        </RelativeLayout>
     </LinearLayout>
 </LinearLayout>
