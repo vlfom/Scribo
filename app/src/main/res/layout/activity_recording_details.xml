@@ -31,12 +31,13 @@
         android:orientation="vertical"
         android:padding="10dp">
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/recording_details_transcription"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="@string/recording_details_textview_placeholder"
             android:padding="20dp"
-            android:justificationMode="inter_word" />
+            android:justificationMode="inter_word"
+            android:scrollbars="vertical"/>
     </LinearLayout>
 
     <LinearLayout

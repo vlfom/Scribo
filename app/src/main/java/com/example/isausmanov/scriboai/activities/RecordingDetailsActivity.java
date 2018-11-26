@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RecordingDetailsActivity extends AppCompatActivity {
 
+    private TextView textTranscription;
     private TextView textDuration;
     private TextView textTime;
     private Button buttonPause;
@@ -38,14 +40,16 @@ public class RecordingDetailsActivity extends AppCompatActivity {
             }
         });
 
+        this.textTranscription = findViewById(R.id.recording_details_transcription);
+        this.textTranscription.setMovementMethod(new ScrollingMovementMethod());
         this.textDuration = findViewById(R.id.recording_details_duration);
-        this.textTime= findViewById(R.id.recording_details_time);
+        this.textTime = findViewById(R.id.recording_details_time);
         this.buttonPlay = findViewById(R.id.recording_details_play_button);
         this.buttonPause = findViewById(R.id.recording_details_pause_button);
         this.buttonPause.setEnabled(false);
 
         this.seekBar = this.findViewById(R.id.recording_details_seek_bar);
-        this.seekBar.setClickable(false);
+        this.seekBar.setOnSeekBarChangeListener(new MySeekBarChangeListener());
 
         // ID of template song
         int songId = this.getRawResIdByName("template_song");
@@ -55,44 +59,67 @@ public class RecordingDetailsActivity extends AppCompatActivity {
     }
 
     // Find ID of resource in 'raw' folder.
-    public int getRawResIdByName(String resName)  {
+    public int getRawResIdByName(String resName) {
         String pkgName = this.getPackageName();
         return this.getResources().getIdentifier(resName, "raw", pkgName);
     }
 
     // Converts milliseconds to string
     // TODO: handle situations when hours > 100
-    private String millisecondsToString(int milliseconds)  {
+    private String millisecondsToString(int milliseconds) {
         long hours = TimeUnit.MILLISECONDS.toHours((long) milliseconds);
         long minutes = TimeUnit.MILLISECONDS.toMinutes((long) milliseconds) % 60;
-        long seconds =  TimeUnit.MILLISECONDS.toSeconds((long) milliseconds) % 60;
+        long seconds = TimeUnit.MILLISECONDS.toSeconds((long) milliseconds) % 60;
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
+    // Configure SeekBar interaction
+    private class MySeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
+
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (!fromUser) {
+                return;
+            }
+
+            mediaPlayer.seekTo((int) (progress * 1.0 / seekBar.getMax() * mediaPlayer.getDuration()));
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+
+        }
+    }
+
     // Starts playback
-    public void startPlayback(View view)  {
+    public void startPlayback(View view) {
         int duration = this.mediaPlayer.getDuration();
 
         int currentPosition = this.mediaPlayer.getCurrentPosition();
-        if(currentPosition == 0)  {
+        if (currentPosition == 0) {
             this.seekBar.setMax(duration);
             String maxTimeString = this.millisecondsToString(duration);
             this.textDuration.setText(maxTimeString);
-        } else if(currentPosition == duration)  {
+        } else if (currentPosition == duration) {
             // Resets the MediaPlayer to its uninitialized state.
             this.mediaPlayer.reset();
         }
         this.mediaPlayer.start();
         // Create a thread to update position of SeekBar.
         UpdateSeekBarThread updateSeekBarThread = new UpdateSeekBarThread();
-        threadHandler.postDelayed(updateSeekBarThread,50);
+        threadHandler.postDelayed(updateSeekBarThread, 50);
 
         this.buttonPlay.setEnabled(false);
         this.buttonPause.setEnabled(true);
     }
 
     // Pauses playback
-    public void pausePlayback(View view)  {
+    public void pausePlayback(View view) {
         this.mediaPlayer.pause();
         this.buttonPlay.setEnabled(true);
         this.buttonPause.setEnabled(false);
@@ -101,7 +128,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
     // Thread to update position for the SeekBar
     class UpdateSeekBarThread implements Runnable {
 
-        public void run()  {
+        public void run() {
             int currentPosition = mediaPlayer.getCurrentPosition();
             String currentPositionStr = millisecondsToString(currentPosition);
             textTime.setText(currentPositionStr);
