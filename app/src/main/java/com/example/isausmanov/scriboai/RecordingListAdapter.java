@@ -34,6 +34,7 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
     public void onClick(View v) {
         int position = (Integer) v.getTag();
         Object object = getItem(position);
+        //RecordingDataModel reco = getItem(position);
         RecordingDataModel dataModel = (RecordingDataModel) object;
 
         switch (v.getId()) {

@@ -5,12 +5,16 @@ public class RecordingDataModel {
     private String date;
     private long duration;
     private String duration_s;
+    private String Uri;
+    boolean isPlaying = false;
 
-    public RecordingDataModel(String name, String date, long duration) {
+    public RecordingDataModel(String name, String date, long duration, String uri, boolean isPlaying) {
         this.name = name;
         this.date = date;
         this.duration = duration;
         this.duration_s = formatSeconds(duration);
+        this.Uri = uri;
+        this.isPlaying = isPlaying;
     }
 
     public String getName() {
@@ -25,6 +29,14 @@ public class RecordingDataModel {
         return duration_s;
     }
 
+    public String getUri() {
+        return Uri;
+    }
+
+    public void setPlaying(boolean playing){
+        this.isPlaying = playing;
+    }
+
     private static String formatSeconds(long timeInSeconds){
         int seconds = (int)(timeInSeconds % 3600 % 60);
         int minutes = (int)(timeInSeconds % 3600 / 60);
@@ -36,4 +48,5 @@ public class RecordingDataModel {
 
         return HH + ":" + MM + ":" + SS;
     }
+
 }

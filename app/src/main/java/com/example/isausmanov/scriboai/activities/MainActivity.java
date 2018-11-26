@@ -32,10 +32,11 @@ public class MainActivity extends AppCompatActivity {
     Button recBtn, toListBtn, doneBtn;
     Chronometer chronometer;
     MediaRecorder mRecorder;
+    MediaPlayer mPlayer;
     String fileName = null;
     int recordFlag = 0; // 0-not recording 1-recording
     boolean isPlaying = false;
-    private MediaPlayer mPlayer;
+
     //private int lastProgress = 0;
 
 
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getPermissionToRecordAudio();
         }
+
         initViews();
 
         // Go to list activity when clicked
@@ -97,10 +99,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
-
-
-
     }
 
     private void prepareforRecording() {
@@ -124,8 +122,9 @@ public class MainActivity extends AppCompatActivity {
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        // mRecorder.setAudioEncodingBitRate(96000); // s
-        // mRecorder.setAudioSamplingRate(44100); // s
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        //mRecorder.setAudioEncodingBitRate(96000); // s
+        //mRecorder.setAudioSamplingRate(44100); // s
         /**In the lines below, we create a directory ScriboAI/Audios in the phone storage
          * and the audios are being stored in the Audios folder **/
         File root = android.os.Environment.getExternalStorageDirectory();
@@ -134,11 +133,12 @@ public class MainActivity extends AppCompatActivity {
             file.mkdirs();
         }
 
+        // Give a specific title for the recording
         fileName =  root.getAbsolutePath() + "/ScriboAI/Audios/" +
                 String.valueOf(System.currentTimeMillis() + ".3gp");
         Log.d("filename",fileName);
         mRecorder.setOutputFile(fileName);
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
 
         try {
             mRecorder.prepare();
@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        stopPlaying();
+        //stopPlaying();
         //starting the chronometer
         chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.start();
@@ -176,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
             mPlayer.setDataSource(fileName);
             mPlayer.prepare();
             mPlayer.start();
+            Log.d("filename",fileName);
         } catch (IOException e) {
             Log.e("LOG_TAG", "prepare() failed");
         }
@@ -186,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                // Dp something with button
+                // Do something with button
                 isPlaying = false;
                 chronometer.stop();
             }

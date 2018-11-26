@@ -14,10 +14,18 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0"
         tools:layout_editor_absoluteX="7dp"
-        android:layout_weight="1"
+        android:layout_weight="2"
         android:divider="@null"
         android:dividerHeight="0dp"
         android:paddingTop="20dp"
         />
+
+    <TextView
+        android:id="@+id/textViewNoRecordings"
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:layout_gravity = "center"
+        android:text="No recordings" />
 
 </LinearLayout>
