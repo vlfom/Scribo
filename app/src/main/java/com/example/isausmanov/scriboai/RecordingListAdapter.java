@@ -78,8 +78,11 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
 //        result.startAnimation(animation);
         lastPosition = position;
 
+
+
         viewHolder.name.setText(dataModel.getName());
-        viewHolder.duration.setText(dataModel.getDuration());
+        viewHolder.duration.setText(dataModel.getDuration_s());
+        viewHolder.date.setText(dataModel.getDate());
         viewHolder.icon.setOnClickListener(this);
         viewHolder.icon.setTag(position);
         // Return the completed view to render on screen
