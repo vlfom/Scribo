@@ -7,6 +7,10 @@ import android.arch.persistence.room.PrimaryKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 @Entity
 public class RecordingDataModel {
 
@@ -34,9 +38,9 @@ public class RecordingDataModel {
     @ColumnInfo(name = "r_playing")
     boolean isPlaying = false;
 
-    public RecordingDataModel(String name, String date, long duration, String uri, boolean isPlaying) {
+    public RecordingDataModel(String name, long duration, String uri, boolean isPlaying) {
         this.name = name;
-        this.date = date;
+        this.date = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new Date());;
         this.duration = duration;
         this.duration_s = formatSeconds(duration);
         this.uri = uri;
@@ -99,16 +103,15 @@ public class RecordingDataModel {
         return isPlaying;
     }
 
-    private static String formatSeconds(long timeInSeconds){
-        int seconds = (int)(timeInSeconds % 3600 % 60);
-        int minutes = (int)(timeInSeconds % 3600 / 60);
-        int hours = (int)(timeInSeconds / 3600);
+    private static String formatSeconds(long durationInMillis){
 
-        String HH = hours < 10 ? "0" + hours : String.valueOf(hours);
-        String MM = minutes < 10 ? "0" + minutes : String.valueOf(minutes);
-        String SS = seconds < 10 ? "0" + seconds : String.valueOf(seconds);
+        long second = (durationInMillis / 1000) % 60;
+        long minute = (durationInMillis / (1000 * 60)) % 60;
+        long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
 
-        return HH + ":" + MM + ":" + SS;
+        String time = String.format("%02d:%02d:%02d", hour, minute, second);
+
+        return time;
     }
 
 }

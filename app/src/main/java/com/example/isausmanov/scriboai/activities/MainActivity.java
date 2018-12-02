@@ -5,10 +5,8 @@ import android.arch.persistence.room.Room;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.Build;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -27,10 +25,10 @@ import android.widget.Toast;
 
 import com.example.isausmanov.scriboai.R;
 import com.example.isausmanov.scriboai.RecordingDataModel;
+import com.example.isausmanov.scriboai.WavRecorder;
 import com.example.isausmanov.scriboai.database.AppDatabase;
 
 import java.io.File;
-import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,19 +42,16 @@ public class MainActivity extends AppCompatActivity {
     MediaPlayer mPlayer;
     AlertDialog.Builder builder;
     EditText input;
+    WavRecorder wavRecorder;
 
     String fileName = null;
+    long totalRecDuration = 0;
+    long recStartTime = 0;
+    long recStopTime = 0;
     int recordFlag = 0; // 0-not recording 1-recording 2-was paused
     boolean isPlaying = false;
     private long mLastStopTime;
     private AppDatabase db;
-
-   /* private String rec_name = "";
-    private String rec_date = "";
-    private long rec_duration = 0;
-    private String rec_uri = ""; */
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getPermissionToRecordAudio();
         }
-
 
         initViews();
 
@@ -89,19 +83,27 @@ public class MainActivity extends AppCompatActivity {
                     // Start recording.
                     prepareUIforRecording();
                     startRecording();
+                    recStartTime = System.currentTimeMillis();
                     recordFlag = 1;
                     db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "production")
                             .allowMainThreadQueries()
                             .build();
                     // If recording is on going
+
                 } else if (recordFlag == 1) {
                     prepareUIforPause();
                     pauseRecording();
+
+                    recStopTime = System.currentTimeMillis();
+                    long timeElapsed = recStopTime - recStartTime;
+                    totalRecDuration = totalRecDuration + timeElapsed;
+
                     recordFlag = 2;
                     // if recording if recording was paused
                 } else if (recordFlag == 2) {
                     // resume recording
                     prepareUIforRecording();
+                    recStartTime = System.currentTimeMillis();
                     resumeRecording();
                     recordFlag = 1;
                 }
@@ -110,33 +112,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        // Done button clicked. Create a pop-up to save the recording. Convert to .wav
+        // Done button clicked. Show a pop-up to save the recording.
         doneBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                if( !isPlaying && fileName != null ){
-//                    isPlaying = true;
-//                    startPlaying();
-//                }else{
-//                    isPlaying = false;
-//                    stopPlaying();
-//                }
-                //startPlaying();
-                // Stop recording, then save the recording
-
+                prepareUIforStop();
                 showAlert();
-
-                // JUST FOR TIME BEING.
-                // TODO: STOP RECORDING, SHOW A POP-UP, SAVE TO DATABASE, UPDATE UI.
-                prepareUIforStop();
                 stopRecording();
-                //startPlaying();
-                db.close();
                 recordFlag = 0;
-                prepareUIforStop();
             }
         });
-
 
     }
 
@@ -160,65 +145,42 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void startRecording() {
-        //we use the MediaRecorder class to record
-        mRecorder = new MediaRecorder();
-        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-        //mRecorder.setAudioEncodingBitRate(96000); // s
-        //mRecorder.setAudioSamplingRate(44100); // s
-        /**In the lines below, we create a directory ScriboAI/Audios in the phone storage
-         * and the audios are being stored in the Audios folder **/
+        // Place where the .wav recordings stored on the phone
         File root = android.os.Environment.getExternalStorageDirectory();
-        File file = new File(root.getAbsolutePath() + "/ScriboAI/Audios");
-        if (!file.exists()) {
-            file.mkdirs();
-        }
-
-        // Give a specific title for the recording
         fileName =  root.getAbsolutePath() + "/ScriboAI/Audios/" +
-                String.valueOf(System.currentTimeMillis() + ".3gp");
-        Log.d("filename",fileName);
-        mRecorder.setOutputFile(fileName);
-
-        try {
-            mRecorder.prepare();
-            mRecorder.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+                String.valueOf(System.currentTimeMillis() + ".wav");
+        wavRecorder = new WavRecorder(fileName);
+        wavRecorder.startRecording();
 
         chronoStart();
     }
 
     private void pauseRecording() {
-
         try{
-            mRecorder.pause();
-            //mRecorder.release();
+            wavRecorder.pauseRecording();
         }catch (Exception e){
             e.printStackTrace();
-            Log.d("MediaRecorder", "Exception at pauseRecording");
+            Log.d(TAG_REC, "Exception at pauseRecording");
         }
 
         chronoPause();
 
+        // TODO: UI1 - make a label above timer that changes string value instead
         Toast.makeText(this, "Recording paused", Toast.LENGTH_SHORT).show();
     }
 
     private void resumeRecording() {
 
         try{
-            mRecorder.resume();
-            //mRecorder.release();
+            wavRecorder.resumeRecording();
         }catch (Exception e){
             e.printStackTrace();
-            Log.d("MediaRecorder", "Exception at resumeRecording");
+            Log.d(TAG_REC, "Exception at resumeRecording");
         }
 
         chronoResume();
-
         //showing the play button
+        // TODO: UI1
         Toast.makeText(this, "Recording", Toast.LENGTH_SHORT).show();
     }
 
@@ -226,13 +188,13 @@ public class MainActivity extends AppCompatActivity {
     private void stopRecording() {
 
         try{
-            mRecorder.stop();
-            mRecorder.release();
+            wavRecorder.stopRecording();
         }catch (Exception e){
             e.printStackTrace();
-            Log.d("MediaRecorder", "Exception at stopRecording");
+            // TODO: UI1
+            Log.d(TAG_REC, "Exception at stopRecording");
         }
-        mRecorder = null;
+
         //stop, reset the chronometer
         chronometer.stop();
         chronometer.setBase(SystemClock.elapsedRealtime());
@@ -240,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
+/*
     private void startPlaying() {
         if (mPlayer.isPlaying()) {
             stopPlaying();
@@ -269,7 +231,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+*/
 
+/*
 
     private void stopPlaying() {
         try{
@@ -283,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         chronometer.stop();
     }
 
-
+*/
     // Initialize UI elements here
     private void initViews() {
         // Initialize UI elements
@@ -312,16 +276,9 @@ public class MainActivity extends AppCompatActivity {
         chronometer.start();
     }
 
-   /* private void clearRecValues(){
-        rec_name = "";
-        rec_date = "";
-        rec_duration = 0;
-        rec_uri = "";
-    } */
-
     private void showAlert(){
 
-        builder.setTitle("Name");
+        builder.setTitle("Name your recording");
 
         // Set up the input
         input = new EditText(MainActivity.this);
@@ -348,18 +305,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveRecording(String rec_name) {
-        Uri uri = Uri.parse(fileName);
-        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        mmr.setDataSource(MainActivity.this, uri);
-        String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-        String dateStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE);
-       // int millSecond = Integer.parseInt(durationStr);
-        Log.d("SAVE", rec_name);
-        //Log.d("SAVE", durationStr);
-        Log.d("SAVE", dateStr);
-        Log.d("SAVE", fileName);
 
-        db.recordingDao().insertAll(new RecordingDataModel(rec_name, dateStr.substring(4,12), Integer.parseInt(durationStr), fileName, false));
+        Log.d(TAG_DB, fileName);
+        Log.d(TAG_DB, "total rec duration: " + totalRecDuration);
+
+        db.recordingDao().insertAll(new RecordingDataModel(rec_name, totalRecDuration, fileName, false));
+        db.close();
+
+        // TODO: Put separately somewhere later
+        totalRecDuration = 0;
+        recStartTime = 0;
+        recStopTime = 0;
     }
 
 
@@ -406,4 +362,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // Logging tags
+    String TAG_REC = "recording";
+    String TAG_DB = "db_saving";
 }
