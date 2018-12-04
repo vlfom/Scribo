@@ -29,6 +29,21 @@ import com.example.isausmanov.scriboai.WavRecorder;
 import com.example.isausmanov.scriboai.database.AppDatabase;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+// Tersor stuff
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.AudioEvent;
+import be.tarsos.dsp.AudioProcessor;
+import be.tarsos.dsp.io.TarsosDSPAudioFormat;
+import be.tarsos.dsp.io.UniversalAudioInputStream;
+import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
+import be.tarsos.dsp.mfcc.MFCC;
+// Tersor
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int RECORD_AUDIO_REQUEST_CODE = 123;
 
     // UI elements declaration
-    Button recBtn, toListBtn, doneBtn;
+    Button recBtn, toListBtn, doneBtn, testMfcc;
     Chronometer chronometer;
     MediaRecorder mRecorder;
     MediaPlayer mPlayer;
@@ -52,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     boolean isPlaying = false;
     private long mLastStopTime;
     private AppDatabase db;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +139,63 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Instruction to test:
+        // Start recording an Audio on the phone. Then Pause the recording and Save it. Give it a name, press OK.
+        // Then click on MFCC (dummy) button. It will call tersorMFCC function and will pass the path
+        // to the latest recorded .wav file.
+        // See the output in Logcast. Pick "Info" in the drop down list. Write "MFCC" in the search box.
+        testMfcc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("MFCC", "File Path: " + fileName);
+                try {
+                    // extract features
+                    tersorMFCC(fileName);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+                int amountMFCC = 0;
+                for (float[] floats : mfccFeatures){
+                    for (float fls : floats){
+                        amountMFCC++;
+                        Log.i("MFCC", " " + fls);
+                    }
+                }
+                Log.i("MFCC", "Number of MFCCs: " + amountMFCC);
+                // TODO: When the recording is saved, store the mfccFeatures in DB for the corresponding recording.
+            }
+        });
+    }
+
+    List<float[]> mfccFeatures = null;
+
+    private void tersorMFCC(String uriToAudioFile) throws FileNotFoundException {
+        int sampleRate = 16000;
+        int bufferSize = 512;
+        int bufferOverlap = 128;
+        new AndroidFFMPEGLocator(this);
+        mfccFeatures = new ArrayList<>(200);
+
+        File audioFile = new File(uriToAudioFile);
+        InputStream inStream = new FileInputStream(audioFile);
+
+        AudioDispatcher dispatcher = new AudioDispatcher(new UniversalAudioInputStream(inStream, new TarsosDSPAudioFormat(sampleRate, bufferSize, 1, true, true)), bufferSize, bufferOverlap);
+        final MFCC mfcc = new MFCC(bufferSize, sampleRate, 20, 50, 300, 3000);
+        dispatcher.addAudioProcessor(mfcc);
+        dispatcher.addAudioProcessor(new AudioProcessor() {
+
+            @Override
+            public void processingFinished() {
+            }
+
+            @Override
+            public boolean process(AudioEvent audioEvent) {
+                mfccFeatures.add(mfcc.getMFCC());
+                return true;
+            }
+        });
+        dispatcher.run();
     }
 
     private void prepareUIforRecording() {
@@ -255,6 +328,7 @@ public class MainActivity extends AppCompatActivity {
         recBtn = findViewById(R.id.rec_btn);
         toListBtn = findViewById(R.id.list_btn);
         doneBtn = findViewById(R.id.done_btn);
+        testMfcc = findViewById(R.id.testMfcc);
         doneBtn.setEnabled(false);
         builder = new AlertDialog.Builder(MainActivity.this);
     }
