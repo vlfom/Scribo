@@ -156,12 +156,16 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 int amountMFCC = 0;
+                Log.i("MFCC", "Total amount of mfccs: " + mfccFeatures.size());
                 for (float[] floats : mfccFeatures){
+                    Log.i("MFCC", " length of each: " + floats.length);
                     for (float fls : floats){
                         amountMFCC++;
-                        Log.i("MFCC", " " + fls);
+                       // Log.i("MFCC", " " + fls);
                     }
                 }
+                // 25 milis length of audio = 35 features
+                // 25 milis time window.
                 Log.i("MFCC", "Number of MFCCs: " + amountMFCC);
                 // TODO: When the recording is saved, store the mfccFeatures in DB for the corresponding recording.
             }
@@ -171,17 +175,19 @@ public class MainActivity extends AppCompatActivity {
     List<float[]> mfccFeatures = null;
 
     private void tersorMFCC(String uriToAudioFile) throws FileNotFoundException {
-        int sampleRate = 16000;
-        int bufferSize = 512;
-        int bufferOverlap = 128;
+        int sampleRate = 16000; // is good
+        int bufferSize = 400;
+        int bufferOverlap = 160;
         new AndroidFFMPEGLocator(this);
         mfccFeatures = new ArrayList<>(200);
 
         File audioFile = new File(uriToAudioFile);
         InputStream inStream = new FileInputStream(audioFile);
-
+        // i1 = 11 is good
+        // duration is missing 25 milis.
+        // step size 10 milis.
         AudioDispatcher dispatcher = new AudioDispatcher(new UniversalAudioInputStream(inStream, new TarsosDSPAudioFormat(sampleRate, bufferSize, 1, true, true)), bufferSize, bufferOverlap);
-        final MFCC mfcc = new MFCC(bufferSize, sampleRate, 20, 50, 300, 3000);
+        final MFCC mfcc = new MFCC(bufferSize, sampleRate, 11, 50, 300, 3000);
         dispatcher.addAudioProcessor(mfcc);
         dispatcher.addAudioProcessor(new AudioProcessor() {
 
