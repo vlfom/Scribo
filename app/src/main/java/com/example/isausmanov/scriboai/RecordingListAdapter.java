@@ -36,13 +36,6 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
         Object object = getItem(position);
         //RecordingDataModel reco = getItem(position);
         RecordingDataModel dataModel = (RecordingDataModel) object;
-
-        switch (v.getId()) {
-            case R.id.list_item_image:
-                Toast.makeText(context, "Duration: " + dataModel.getDuration(),
-                        Toast.LENGTH_SHORT).show();
-                break;
-        }
     }
 
     private int lastPosition = -1;

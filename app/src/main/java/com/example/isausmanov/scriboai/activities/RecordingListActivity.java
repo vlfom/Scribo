@@ -48,9 +48,6 @@ public class RecordingListActivity extends AppCompatActivity {
                 RecordingDataModel dataModel = dataModels.get(position);
                 // To be forwarded to a new View.
                 Log.d("ITEM", dataModel.getUri());
-                Toast.makeText(getBaseContext(),
-                        dataModel.getName() + "\nDuration: " + dataModel.getDuration(),
-                        Toast.LENGTH_SHORT).show();
 
                 Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
                 startActivity(i);

@@ -73,7 +73,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         StringBuilder text = new StringBuilder();
         String header = "<html>\n" +
                 "<head></head>\n" +
-                "<body style=\"text-align:justify;color:rgb(40, 40, 40);font-size:14px;background:transparent;\">\n";
+                "<body style=\"text-align:justify;color:rgb(100, 100, 100);font-size:16px;background:transparent;\">\n";
         String footer = "</body>\n" +
                 "</html>";
 
@@ -185,7 +185,8 @@ public class RecordingDetailsActivity extends AppCompatActivity {
                     }
 
                     String wordValue = RecordingDataModel.transcription_words.get(index);
-                    RecordingDataModel.transcription_words.set(index, "<span style=\"background-color: #13a5ff; color:white\">" + wordValue + "</span>");
+//                    RecordingDataModel.transcription_words.set(index, "<span style=\"background-color: #13a5ff; color:white\">" + wordValue + "</span>");
+                    RecordingDataModel.transcription_words.set(index, "<span style=\"background-color: #ddf;\">" + wordValue + "</span>");
                     setTranscriptionContent(RecordingDataModel.transcription_words);
                     RecordingDataModel.transcription_words.set(index, wordValue);
                 }
