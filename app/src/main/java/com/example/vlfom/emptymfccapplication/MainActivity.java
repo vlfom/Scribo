@@ -51,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Here your model should take this mfcc_data stuff
         // TODO: insert Huawei model
+        // TODO: input is mfcc_data which is of shape (320, 16)
+        // TODO: output is textMat which is of shape (155, 29(
+        // TODO: example values provided here already for testing
 
         // double[][] prediction = Model.predict(mfcc_data)
 
