@@ -97,11 +97,21 @@ public class MainActivity extends AppCompatActivity {
         MFCC mfcc = new MFCC();
         double[][] mfcc_data = mfcc.process(buffer);
 
+        // Normalization stuff
+        double[] means = {5.02864505e+02,  5.67376525e+01, -2.25769252e+00,  1.87428997e+01,
+                -2.07033204e+00, -1.17880420e+00, -5.28622226e+00, -4.42291375e+00,
+                -1.53781171e+00, -1.88802238e+00, -2.43617578e+00, -1.13052922e+00,
+                -4.90114255e-01, -7.10945463e-02, -2.24118065e+00, -9.93707073e-01};
+        double[] std = {346.64159457,  64.24369628,  32.19659189,  29.04617242,
+                20.59673228,  17.02472866,  15.63392654,  14.73916413,
+                12.41185279,  11.4057914 ,   9.8641764 ,   9.50535904,
+                8.87893913,   8.40962959,   8.19834459,   7.5953224};
+
         // Pad MFCC to fixed shape (320, 16)
         double[][] mfcc_padded = new double[320][16];
         for (int i = 0; i < mfcc_data[0].length; ++i) {
             for (int j = 0; j < 16; ++j) {
-                mfcc_padded[i][j] = mfcc_data[j][i];
+                mfcc_padded[i][j] = (mfcc_data[j][i] - means[j]) / std[j];
             }
         }
 
