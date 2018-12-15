@@ -60,13 +60,13 @@ public class MainActivity extends AppCompatActivity {
         //
 
         // Use dummy data for now. Its shape must be (155, 29) as in the notebook
-        double[][] textMat = DummyData.dummyMatrix;
+        double[][] prediction = DummyData.dummyMatrix;
 
         // Create a language model using target output
         LanguageModel lm = new LanguageModel("he went into the scheme with his whole heart", "' abcdefghijklmnopqrstuvwxyz", "abcdefghijklmnopqrstuvwxyz");
 
         // Do BeamSearch
-        String res = WordBeamSearch.search(textMat, 25, lm, true);
+        String res = WordBeamSearch.search(prediction, 25, lm, true);
 
         // Log result
         Log.d("CTC_LOG", res);
