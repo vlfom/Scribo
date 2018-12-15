@@ -12,11 +12,11 @@ import android.media.MediaRecorder;
 import android.os.Environment;
 
 public class WavRecorder {
-    private static final int RECORDER_BPP = 16;
+    private static final int RECORDER_BPP = 16; // 16000
     private static final String AUDIO_RECORDER_FOLDER = "AudioRecorder";
     private static final String AUDIO_RECORDER_TEMP_FILE = "record_temp.raw";
     private static final int RECORDER_SAMPLERATE = 44100;
-    private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
+    private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO; // Is this Mono = 1?
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     short[] audioData;
 
