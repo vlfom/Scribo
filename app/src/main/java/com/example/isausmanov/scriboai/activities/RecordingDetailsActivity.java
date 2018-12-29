@@ -17,9 +17,11 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.isausmanov.scriboai.R;
 import com.example.isausmanov.scriboai.RecordingDataModel;
+import com.example.isausmanov.scriboai.ctc_decoder.DummyData;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,12 +45,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
 
         // Configure top toolbar to navigate back
         Toolbar toolbar = findViewById(R.id.recording_details_toolbar);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         this.textTranscription = findViewById(R.id.recording_details_transcription);
         this.textTranscription.setVerticalScrollBarEnabled(true);
@@ -68,11 +65,29 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         // Create MediaPlayer.
         this.mediaPlayer = MediaPlayer.create(this, songId);
 
-        // Template
-        setTranscriptionContent(RecordingDataModel.transcription_words);
+        String transcription = getIntent().getStringExtra("AUDIO_TRANSCRIPTION");
+        setTranscriptionContent(transcription.substring(0, 1).toUpperCase() + transcription.substring(1));
+
+        setTranscriptionContent(transcription.substring(0, 1).toUpperCase() + transcription.substring(1));
+        //setTranscriptionContent(RecordingDataModel.transcription_words, null);
     }
 
-    private void setTranscriptionContent(ArrayList<String> words) {
+    private void setTranscriptionContent(String content) {
+        StringBuilder text = new StringBuilder();
+        String header = "<html>\n" +
+                "<head></head>\n" +
+                "<body style=\"text-align:justify;color:rgb(100, 100, 100);font-size:16px;background:transparent;\">\n";
+        String footer = "</body>\n" +
+                "</html>";
+
+        text.append(content);
+
+        text.append(footer);
+
+        textTranscription.loadData(text.toString(), "text/html; charset=utf-8", "utf-8");
+    }
+
+    private void setTranscriptionContent(ArrayList<String> words, Integer index) {
         StringBuilder text = new StringBuilder();
         String header = "<html>\n" +
                 "<head></head>\n" +
@@ -81,13 +96,55 @@ public class RecordingDetailsActivity extends AppCompatActivity {
                 "</html>";
 
         text.append(header);
-        for (int i = 0; i < words.size(); ++i) {
-            String word = words.get(i);
-            if (i > 0 && !word.equals(".")) {
-                text.append(" ");
+
+        String word;
+        if (index == null) {
+            for (int i = 0; i < words.size(); ++i) {
+                word = words.get(i);
+                if (i > 0 && !word.equals(".")) {
+                    text.append(" ");
+                }
+                text.append(word);
             }
-            text.append(word);
         }
+        else {
+            for (int i = 0; i < index; ++i) {
+                word = words.get(i);
+                if (i > 0 && !word.equals(".")) {
+                    text.append(" ");
+                }
+                text.append(word);
+            }
+            text.append("<span style=\"background-color: #ddebff;\">");
+            word = words.get(index);
+            if (word.equals(".")) {
+                text.append(".");
+            }
+            else {
+                if (index > 0) {
+                    text.append(" ");
+                }
+                text.append(word);
+
+                if (index + 1 < words.size() && words.get(index + 1).equals(".")) {
+                    text.append(".");
+                }
+                else {
+                    text.append(" ");
+                }
+            }
+            text.append("</span>");
+            for (int i = index + 1; i < words.size(); ++i) {
+                word = words.get(i);
+                if (i > 0 && !word.equals(".") && i != index + 1) {
+                    text.append(" ");
+                }
+                if (!(i == index + 1 && word.equals("."))) {
+                    text.append(word);
+                }
+            }
+        }
+
         text.append(footer);
 
         textTranscription.loadData(text.toString(), "text/html; charset=utf-8", "utf-8");
@@ -176,7 +233,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
                 previousIndex = index;
 
                 if (index == -1) {
-                    setTranscriptionContent(RecordingDataModel.transcription_words);
+                    setTranscriptionContent(RecordingDataModel.transcription_words, null);
                 }
                 else {
                     if (index < 0) {
@@ -187,11 +244,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
                         index -= 1;
                     }
 
-                    String wordValue = RecordingDataModel.transcription_words.get(index);
-//                    RecordingDataModel.transcription_words.set(index, "<span style=\"background-color: #13a5ff; color:white\">" + wordValue + "</span>");
-                    RecordingDataModel.transcription_words.set(index, "<span style=\"background-color: #ddf;\">" + wordValue + "</span>");
-                    setTranscriptionContent(RecordingDataModel.transcription_words);
-                    RecordingDataModel.transcription_words.set(index, wordValue);
+                    setTranscriptionContent(RecordingDataModel.transcription_words, index);
                 }
             }
 

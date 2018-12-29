@@ -27,8 +27,10 @@ import com.example.isausmanov.scriboai.R;
 import com.example.isausmanov.scriboai.RecordingDataModel;
 import com.example.isausmanov.scriboai.WavRecorder;
 import com.example.isausmanov.scriboai.database.AppDatabase;
+import com.example.isausmanov.scriboai.model.SpeechrecognitionModel;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -122,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
                 recordFlag = 0;
             }
         });
-
     }
 
     private void prepareUIforRecording() {
@@ -284,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
         input = new EditText(MainActivity.this);
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
+        builder.setView(input, 50, 0, 50, 0);
 
         // Set up the buttons
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {

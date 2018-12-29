@@ -4,11 +4,24 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.example.isausmanov.scriboai"
+        externalNativeBuild {
+              cmake {
+                cppFlags "-std=c++11 -frtti -fexceptions"
+            }
+        }
+        ndk {
+            abiFilters 'arm64-v8a','armeabi-v7a'
+        }
         minSdkVersion 27
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
     }
     buildTypes {
         release {
@@ -20,6 +33,14 @@ android {
     // Temporary fix until alpha10
     packagingOptions {
         exclude 'META-INF/proguard/androidx-annotations.pro'
+    }
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+    
+    aaptOptions {
+        noCompress "txt"
     }
 }
 
