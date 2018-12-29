@@ -38,8 +38,6 @@ public class MainActivity extends AppCompatActivity {
     // UI elements declaration
     Button recBtn, toListBtn, doneBtn;
     Chronometer chronometer;
-    MediaRecorder mRecorder;
-    MediaPlayer mPlayer;
     AlertDialog.Builder builder;
     EditText input;
     WavRecorder wavRecorder;
@@ -49,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     long recStartTime = 0;
     long recStopTime = 0;
     int recordFlag = 0; // 0-not recording 1-recording 2-was paused
-    boolean isPlaying = false;
     private long mLastStopTime;
     private AppDatabase db;
 
