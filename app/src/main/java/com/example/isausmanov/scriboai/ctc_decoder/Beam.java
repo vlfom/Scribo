@@ -1,5 +1,7 @@
 package com.example.isausmanov.scriboai.ctc_decoder;
 
+import android.util.Log;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class Beam {
 
     public boolean useNGrams;
 
-    public Beam(LanguageModel languageModel, boolean useNGrams) {
+    public Beam(LanguageModel languageModel) {
         this.prBlank = 1;
         this.prNonBlank = 0;
 
@@ -31,8 +33,6 @@ public class Beam {
         this.prTotal = 1.0;
 
         this.languageModel = languageModel;
-
-        this.useNGrams = useNGrams;
     }
 
     public boolean mergeBeam(Beam beam) {
@@ -51,7 +51,7 @@ public class Beam {
     }
 
     public Beam createChildBeam(Character newChar, double prBlank, double prNonBlank) {
-        Beam beam = new Beam(this.languageModel, this.useNGrams);
+        Beam beam = new Beam(this.languageModel);
 
         beam.text = this.text;
         beam.wordHist = new LinkedList<>(this.wordHist);
@@ -65,31 +65,20 @@ public class Beam {
         if (newChar != null) {
             beam.text = beam.text + newChar;
 
-            if (this.useNGrams) {
+            if (beam.languageModel.ngram_usage != LanguageModel.NGRAM_NONE) {
                 if (beam.languageModel.wordChars.contains(newChar)) {
                     beam.wordDev += newChar;
 
-                    // TODO: remove
-                    double prSum = beam.languageModel.getNextWordsUnigramProb(beam.wordDev);
                     int numWords = beam.wordHist.size();
+                    double prSum = 0;
 
-                    // TODO: we can pre-calculate unigram prob for every subtree
-//                    List<String> nextWords = beam.languageModel.getNextWords(beam.wordDev);
-//
-//                    int numWords = beam.wordHist.size();
-//                    double prSum = 0;
-//
-//                    if (numWords == 0) {
-//                        for (String word : nextWords) {
-//                            prSum += beam.languageModel.getUnigramProb(word);
-//                        }
-//                    }
-//                    else {
-//                        String lastWord = beam.wordHist.get(beam.wordHist.size() - 1);
-//                        for (String word : nextWords) {
-//                            prSum += beam.languageModel.getBigramProb(lastWord, word);
-//                        }
-//                    }
+                    if (numWords == 0 || beam.languageModel.ngram_usage == LanguageModel.NGRAM_UNIGRAM) {
+                        prSum += beam.languageModel.getNextWordsUnigramProb(beam.wordDev);
+                    }
+                    else {
+                        String lastWord = beam.wordHist.get(beam.wordHist.size() - 1);
+                        prSum += beam.languageModel.getNextWordsBigramProb(lastWord, beam.wordDev);
+                    }
 
                     beam.prTotal = beam.prUnnormalized * prSum;
                     if (numWords >= 1) {
@@ -103,18 +92,14 @@ public class Beam {
 
                         int numWords = beam.wordHist.size();
 
-                        // TODO: remove
-                        beam.prUnnormalized *= beam.languageModel.getUnigramProb(beam.wordHist.get(beam.wordHist.size() - 1));
-                        beam.prTotal = Math.pow(beam.prUnnormalized, 1.0 / numWords);
-
-//                        if (numWords == 1) {
-//                            beam.prUnnormalized *= beam.languageModel.getUnigramProb(beam.wordHist.get(beam.wordHist.size() - 1));
-//                            beam.prTotal = beam.prUnnormalized;
-//                        }
-//                        else if (numWords >= 2) {
-//                            beam.prUnnormalized *= beam.languageModel.getBigramProb(beam.wordHist.get(beam.wordHist.size() - 2), beam.wordHist.get(beam.wordHist.size() - 1));
-//                            beam.prTotal = Math.pow(beam.prUnnormalized, 1.0 / numWords);
-//                        }
+                        if (numWords == 1 || beam.languageModel.ngram_usage == LanguageModel.NGRAM_UNIGRAM) {
+                            beam.prUnnormalized *= beam.languageModel.getUnigramProb(beam.wordHist.get(beam.wordHist.size() - 1));
+                            beam.prTotal = beam.prUnnormalized;
+                        }
+                        else if (numWords >= 2) {
+                            beam.prUnnormalized *= beam.languageModel.getBigramProb(beam.wordHist.get(beam.wordHist.size() - 2), beam.wordHist.get(beam.wordHist.size() - 1));
+                            beam.prTotal = Math.pow(beam.prUnnormalized, 1.0 / numWords);
+                        }
                     }
                 }
             }

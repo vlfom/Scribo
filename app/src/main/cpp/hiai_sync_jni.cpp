@@ -93,7 +93,7 @@ static void getInputAndOutputFromModel(const char *modelName){
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_example_isausmanov_scriboai_model_ModelManager_loadModelSync(JNIEnv *env, jclass type,
-                                                    jstring jmodelName, jobject assetManager) {
+                                                                      jstring jmodelName, jobject assetManager) {
     const char *modelName = env->GetStringUTFChars(jmodelName, 0);
 
     char modelname[128] = {0};
@@ -133,8 +133,8 @@ Java_com_example_isausmanov_scriboai_model_ModelManager_loadModelSync(JNIEnv *en
     int ret = HIAI_ModelManager_loadFromModelBuffers(modelManager, modelBufferArray, 1);
 
     LOGI("load model from assets ret = %d", ret);
-	
-	getInputAndOutputFromModel(modelName);
+
+    getInputAndOutputFromModel(modelName);
 
     env->ReleaseStringUTFChars(jmodelName, modelName);
 
@@ -170,22 +170,22 @@ Java_com_example_isausmanov_scriboai_model_ModelManager_unloadModelSync(JNIEnv *
 extern "C"
 JNIEXPORT jfloatArray JNICALL
 Java_com_example_isausmanov_scriboai_model_ModelManager_runModelSync(JNIEnv *env, jclass type, jstring jmodelName,
-                                                   jfloatArray jbuf) {
+                                                                     jfloatArray jbuf) {
 
-	if (NULL == modelManager) {
+    if (NULL == modelManager) {
         LOGE("please load model first");
         return NULL;
     }
-	
-	if (NULL == jbuf) {
+
+    if (NULL == jbuf) {
         LOGE("please input data");
         return NULL;
     }
-	
-	float *dataBuff = env->GetFloatArrayElements(jbuf, NULL);
-	
+
+    float *dataBuff = env->GetFloatArrayElements(jbuf, NULL);
+
     const char *modelName = env->GetStringUTFChars(jmodelName, 0);
-      
+
     //Todo: modify input tensor
     inputtensor = HIAI_TensorBuffer_create(input_N, input_C, input_H, input_W);
     inputtensor2 = HIAI_TensorBuffer_create(input_N2, input_C2, input_H2, input_W2);
@@ -235,8 +235,8 @@ Java_com_example_isausmanov_scriboai_model_ModelManager_runModelSync(JNIEnv *env
     int outputSize = 15360;
 
     float *outputBuffer = (float *) HIAI_TensorBuffer_getRawBuffer(outputtensor);
-    
-	jfloatArray result = env->NewFloatArray(outputSize);
+
+    jfloatArray result = env->NewFloatArray(outputSize);
     env->SetFloatArrayRegion(result, 0, outputSize, outputBuffer);
 
     if (inputtensor != NULL) {

@@ -1,9 +1,6 @@
 package com.example.isausmanov.scriboai.ctc_decoder;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PrefixTree {
     public Node root;
@@ -15,9 +12,8 @@ public class PrefixTree {
     public void addWord(String text, Double unigramProb) {
         Node node = root;
 
-        if (unigramProb != null) {
-            root.unigramChildrenSum += unigramProb;
-        }
+        root.unigramChildrenSum += unigramProb;
+        root.childrenNum += 1;
 
         for (int i = 0; i < text.length(); ++i) {
             char c = text.charAt(i);
@@ -26,23 +22,53 @@ public class PrefixTree {
             }
             node = node.children.get(c);
 
-            if (unigramProb != null) {
-                node.unigramChildrenSum += unigramProb;
-            }
+            node.unigramChildrenSum += unigramProb;
+            node.childrenNum += 1;
 
             if (i + 1 == text.length()) {
                 node.isWord = true;
+                node.unigramProb = unigramProb;
             }
         }
     }
 
-    public void addWords(List<String> words, LanguageModel languageModel) {
-        for (String word : words) {
-            if (languageModel == null) {
-                addWord(word, null);
+    public void addBigram(Integer word_encoded, String word2, Double prob) {
+        Node node = root;
+
+        if (root.bigramChildrenCount.containsKey(word_encoded)) {
+            root.bigramChildrenCount.put(word_encoded, root.bigramChildrenCount.get(word_encoded) + 1);
+        }
+        else {
+            root.bigramChildrenCount.put(word_encoded, 1);
+        }
+
+        if (root.bigramChildrenSum.containsKey(word_encoded)) {
+            root.bigramChildrenSum.put(word_encoded, root.bigramChildrenSum.get(word_encoded) + prob);
+        }
+        else {
+            root.bigramChildrenSum.put(word_encoded, prob);
+        }
+
+        for (int i = 0; i < word2.length(); ++i) {
+            char c = word2.charAt(i);
+            node = node.children.get(c);
+
+            if (node.bigramChildrenSum.containsKey(word_encoded)) {
+                node.bigramChildrenSum.put(word_encoded, node.bigramChildrenSum.get(word_encoded) + prob);
             }
             else {
-                addWord(word, languageModel.getUnigramProb(word));
+                node.bigramChildrenSum.put(word_encoded, prob);
+            }
+
+            if (node.bigramChildrenCount.containsKey(word_encoded)) {
+                node.bigramChildrenCount.put(word_encoded, node.bigramChildrenCount.get(word_encoded) + 1);
+            }
+            else {
+                node.bigramChildrenCount.put(word_encoded, 1);
+            }
+
+            if (i+1 == word2.length()) {
+                node.bigramProb.put(word_encoded, prob);
             }
         }
     }
@@ -96,10 +122,41 @@ public class PrefixTree {
         return new LinkedList<>();
     }
 
+    public Double getUnigramProb(String text) {
+        Node node = getNode(text);
+        if (node != null) {
+            return node.unigramProb;
+        }
+
+        return 0.;
+    }
+
     public Double getNextWordsUnigramProb(String text) {
         Node node = getNode(text);
         if (node != null) {
             return node.unigramChildrenSum;
+        }
+
+        return 0.;
+    }
+
+    public Double getBigramProb(Integer prev_word_encoded, String prev_word, String text, Integer totalWordsCount, Integer vocabularySize) {
+        Node node = getNode(text);
+        if (node != null) {
+            return node.bigramProb.getOrDefault(prev_word_encoded,
+                    1.0 / (getUnigramProb(prev_word) * totalWordsCount + vocabularySize));
+        }
+
+        return null;
+    }
+
+    public Double getNextWordsBigramProb(Integer prev_word_encoded, String prev_word, String text, Integer totalWordsCount, Integer vocabularySize) {
+        Node node = getNode(text);
+        if (node != null) {
+            double word_count = getUnigramProb(prev_word) * (totalWordsCount + vocabularySize) - 1;
+
+            return node.bigramChildrenSum.getOrDefault(prev_word_encoded, 0.) +
+                    (node.childrenNum - node.bigramChildrenCount.getOrDefault(prev_word_encoded, 0)) * 1.0 / (word_count + vocabularySize);
         }
 
         return null;
@@ -128,12 +185,25 @@ public class PrefixTree {
     public class Node {
         public HashMap<Character, Node> children;
         public boolean isWord;
+        public double unigramProb;
         public double unigramChildrenSum;
+        public HashMap<Integer, Double> bigramProb;
+        public HashMap<Integer, Double> bigramChildrenSum;
+        public HashMap<Integer, Integer> bigramChildrenCount;
+        public int childrenNum;
 
         public Node() {
+            this.childrenNum = 0;
+
             this.children = new HashMap<>();
             this.isWord = false;
+
+            this.unigramProb = 0;
             this.unigramChildrenSum = 0;
+
+            this.bigramProb = new HashMap<>();
+            this.bigramChildrenSum = new HashMap<>();
+            this.bigramChildrenCount = new HashMap<>();
         }
 
         public String toString() {

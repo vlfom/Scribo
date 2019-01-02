@@ -116,24 +116,29 @@ public class RecordingListActivity extends AppCompatActivity {
 
 
         // Read file from assets
-        FileInputStream iStream;
+        FileInputStream iStreamUnigram;
         try {
-            iStream = getApplicationContext().getAssets().openFd("cleaned_words_10k_freq.txt").createInputStream();
-            Log.d("CoolModel", "Working!");
+            iStreamUnigram = getApplicationContext().getAssets().openFd("unigram_10k.txt").createInputStream();
         } catch (IOException e) {
             e.printStackTrace();
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            String sStackTrace = sw.toString();
-            Log.d("CoolModel", sStackTrace);
             return;
         }
+
+        FileInputStream iStreamBigram;
+        try {
+            iStreamBigram = getApplicationContext().getAssets().openFd("bigram_10k.txt").createInputStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
         Log.d("CoolModel", "Working!");
         languageModel = new LanguageModel(
-                iStream,
+                iStreamUnigram,
+                iStreamBigram,
                 "' abcdefghijklmnopqrstuvwxyz",
-                "abcdefghijklmnopqrstuvwxyz"
+                "abcdefghijklmnopqrstuvwxyz",
+                LanguageModel.NGRAM_BIGRAM
         );
     }
 
@@ -291,7 +296,7 @@ public class RecordingListActivity extends AppCompatActivity {
 //        Log.d("CoolStuff", String.valueOf(data_cnn[400][0]));
 
         // Unravel input
-        float[] input = new float[77056];
+        float[] input = new float[76800 + 128];
         for (int i = 0; i < 76800; ++i) {
             input[i] = (float) data_cnn[i / 160][i % 160];
         }
@@ -322,6 +327,6 @@ public class RecordingListActivity extends AppCompatActivity {
         }
 
         // Do BeamSearch
-        return WordBeamSearch.search(matrix, 25, languageModel, true);
+        return WordBeamSearch.search(matrix, 25, languageModel);
     }
 }

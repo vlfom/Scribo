@@ -4,12 +4,12 @@ import java.util.List;
 
 public class WordBeamSearch {
 
-    public static String search(double[][] mat, int beamWidth, LanguageModel languageModel, boolean useNGrams) {
+    public static String search(double[][] mat, int beamWidth, LanguageModel languageModel) {
         List<Character> chars = languageModel.allChars;
         int blankIdx = chars.size();
         int maxT = mat.length;
 
-        Beam genesisBeam = new Beam(languageModel, useNGrams);
+        Beam genesisBeam = new Beam(languageModel);
         BeamList last = new BeamList();
         last.addBeam(genesisBeam);
 
