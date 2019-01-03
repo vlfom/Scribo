@@ -14,11 +14,10 @@
         android:layout_height="210dp"
         android:layout_centerInParent="true"
         android:layout_marginStart="65dp"
-        android:layout_marginBottom="4dp"
         android:background="#FFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.226"
+        app:layout_constraintHorizontal_bias="0.248"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Chronometer
@@ -26,23 +25,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="108dp"
-        android:layout_marginBottom="250dp"
+        android:layout_marginBottom="104dp"
         android:textColor="@android:color/darker_gray"
         android:textSize="60sp"
-        app:layout_constraintBottom_toTopOf="@+id/rec_btn"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/rec_btn"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="148dp"
-        android:layout_marginEnd="148dp"
-        android:layout_marginBottom="16dp"
-        android:text="Record"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/voiceview"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button

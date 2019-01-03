@@ -101,19 +101,19 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     }
 
     private void prepareUIforRecording() {
-        recBtn.setText("Pause");
+        //recBtn.setText("Pause");
         doneBtn.setEnabled(false);
         toListBtn.setEnabled(false);
     }
 
     private void prepareUIforPause() {
-        recBtn.setText("Resume");
+        //recBtn.setText("Resume");
         doneBtn.setEnabled(true);
         toListBtn.setEnabled(false);
     }
 
     private void prepareUIforStop() {
-        recBtn.setText("Record");
+        //recBtn.setText("Record");
         doneBtn.setEnabled(true);
         toListBtn.setEnabled(true);
     }
@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     private void initViews() {
         // Initialize UI elements
         chronometer = findViewById(R.id.chronometerTimer);
-        recBtn = findViewById(R.id.rec_btn);
+        //recBtn = findViewById(R.id.rec_btn);
         toListBtn = findViewById(R.id.list_btn);
         doneBtn = findViewById(R.id.done_btn);
         doneBtn.setEnabled(false);
