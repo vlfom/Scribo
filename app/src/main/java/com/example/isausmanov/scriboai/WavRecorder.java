@@ -112,7 +112,7 @@ public class WavRecorder {
             }
         }
     }
-
+    // Cisual effect test comment
     private void continueWritingAudioDataToFile() {
         double ampl;
         try {
