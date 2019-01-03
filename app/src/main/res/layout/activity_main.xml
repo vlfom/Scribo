@@ -8,6 +8,19 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
+    <com.example.isausmanov.scriboai.VoiceView
+        android:id="@+id/voiceview"
+        android:layout_width="190dp"
+        android:layout_height="210dp"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="65dp"
+        android:layout_marginBottom="4dp"
+        android:background="#FFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.226"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <Chronometer
         android:id="@+id/chronometerTimer"
         android:layout_width="wrap_content"
@@ -20,8 +33,8 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        style="@style/Widget.AppCompat.Button.Colored"
         android:id="@+id/rec_btn"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="148dp"

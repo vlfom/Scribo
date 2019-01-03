@@ -5,9 +5,11 @@ import android.arch.persistence.room.Room;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
@@ -25,30 +27,40 @@ import android.widget.Toast;
 
 import com.example.isausmanov.scriboai.R;
 import com.example.isausmanov.scriboai.RecordingDataModel;
+import com.example.isausmanov.scriboai.ScreenUtils;
+import com.example.isausmanov.scriboai.VoiceView;
 import com.example.isausmanov.scriboai.WavRecorder;
 import com.example.isausmanov.scriboai.database.AppDatabase;
 
 import java.io.File;
+import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements VoiceView.OnIClickedListener {
 
     // Constant values
     private static final int RECORD_AUDIO_REQUEST_CODE = 123;
 
+    //VoiceView Stuff
+    private VoiceView mVoiceView;
+    private MediaRecorder mMediaRecorder;
+    private Handler mHandler;
+
+    private boolean mIsRecording = false;
+
     // UI elements declaration
-    Button recBtn, toListBtn, doneBtn;
-    Chronometer chronometer;
-    AlertDialog.Builder builder;
-    EditText input;
-    WavRecorder wavRecorder;
+    public Button recBtn, toListBtn, doneBtn;
+    public Chronometer chronometer;
+    public AlertDialog.Builder builder;
+    public EditText input;
+    public WavRecorder wavRecorder;
 
     String fileName = null;
-    long totalRecDuration = 0;
-    long recStartTime = 0;
-    long recStopTime = 0;
-    int recordFlag = 0; // 0-not recording 1-recording 2-was paused
-    private long mLastStopTime;
-    private AppDatabase db;
+    public long totalRecDuration = 0;
+    public long recStartTime = 0;
+    public long recStopTime = 0;
+    public int recordFlag = 0; // 0-not recording 1-recording 2-paused
+    public long mLastStopTime;
+    public AppDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +73,11 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
 
+        // VoiceView Stuff
+        mVoiceView = (VoiceView) findViewById(R.id.voiceview);
+        mVoiceView.setOnClickListener(this);
+        mHandler = new Handler(Looper.getMainLooper());
+
         // Go to list activity when clicked
         toListBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,45 +86,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
-
-
-        // Start/Pause Audio recording
-        recBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // If recording is NOT started
-                if (recordFlag == 0) {
-                    // Start recording.
-                    prepareUIforRecording();
-                    startRecording();
-                    recStartTime = System.currentTimeMillis();
-                    recordFlag = 1;
-                    db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "production")
-                            .allowMainThreadQueries()
-                            .build();
-                    // If recording is on going
-
-                } else if (recordFlag == 1) {
-                    prepareUIforPause();
-                    pauseRecording();
-
-                    recStopTime = System.currentTimeMillis();
-                    long timeElapsed = recStopTime - recStartTime;
-                    totalRecDuration = totalRecDuration + timeElapsed;
-
-                    recordFlag = 2;
-                    // if recording if recording was paused
-                } else if (recordFlag == 2) {
-                    // resume recording
-                    prepareUIforRecording();
-                    recStartTime = System.currentTimeMillis();
-                    resumeRecording();
-                    recordFlag = 1;
-                }
-
-            }
-        });
-
 
         // Done button clicked. Show a pop-up to save the recording.
         doneBtn.setOnClickListener(new View.OnClickListener() {
@@ -198,53 +176,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-/*
-    private void startPlaying() {
-        if (mPlayer.isPlaying()) {
-            stopPlaying();
-        }
-
-        mPlayer = new MediaPlayer();
-        try {
-            //fileName is global string. it contains the Uri to the recently recorded audio.
-            mPlayer.setDataSource(fileName);
-            mPlayer.prepare();
-            mPlayer.start();
-            Log.d("filename",fileName);
-        } catch (IOException e) {
-            Log.d("MediaRecorder", "Exception at startPlaying");
-        }
-        chronometer.setBase(SystemClock.elapsedRealtime());
-        chronometer.start();
-
-        mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                // Do something with button
-                isPlaying = false;
-                chronometer.stop();
-            }
-        });
-
-    }
-*/
-
-/*
-
-    private void stopPlaying() {
-        try{
-            mPlayer.stop();
-            mPlayer.release();
-        }catch (Exception e){
-            e.printStackTrace();
-            Log.d("MediaRecorder", "Exception at stopPlaying");
-        }
-        mPlayer = null;
-        chronometer.stop();
-    }
-
-*/
     // Initialize UI elements here
     private void initViews() {
         // Initialize UI elements
@@ -315,6 +246,85 @@ public class MainActivity extends AppCompatActivity {
         recStopTime = 0;
     }
 
+    // Logging tags
+    String TAG_REC = "recording";
+    String TAG_DB = "db_saving";
+    String TAG_Voice = "voice";
+
+
+
+    // Start/Pause Audio recording
+    @Override
+    public void onHandleRecording() {
+        // If recording is NOT started
+
+        Log.d("FLAG", "flagvalue: " + recordFlag);
+        if (recordFlag == 0) {
+            // Start recording.
+            prepareUIforRecording();
+            startRecording();
+            recStartTime = System.currentTimeMillis();
+            recordFlag = 1;
+            db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "production")
+                    .allowMainThreadQueries()
+                    .build();
+
+            // If recording is on going
+        } else if (recordFlag == 1) {
+            prepareUIforPause();
+            pauseRecording();
+
+            recStopTime = System.currentTimeMillis();
+            long timeElapsed = recStopTime - recStartTime;
+            totalRecDuration = totalRecDuration + timeElapsed;
+
+            recordFlag = 2;
+
+            // If recording was paused
+        } else if (recordFlag == 2) {
+            // resume recording
+            prepareUIforRecording();
+            recStartTime = System.currentTimeMillis();
+            resumeRecording();
+            recordFlag = 1;
+        }
+    }
+
+    // interface methods called from VoiceView.java
+    @Override
+    public void onAnimationStart() {
+        Log.d(TAG_Voice, "onRecordStart");
+        mIsRecording = true;
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                // get amplitude from wavRecorder
+                double amplit = wavRecorder.getAmplitude();
+
+                float radius = (float) scale(amplit, 1, 6500, 50, 440);
+                mVoiceView.animateRadius(radius);
+                //Log.d("RADIUS", "radius value: " + radius);
+                Log.d("RADIUS", " radius original " + amplit);
+                //Log.d("RADIUS", "power radius: " + Math.pow(radius, 4) * ScreenUtils.dp2px(MainActivity.this, 20));
+                Log.d("RADIUS", "radius 380: " + radius);
+                //Log.d("RADIUS", "Utils: " + ScreenUtils.dp2px(MainActivity.this, 20));
+                if (mIsRecording) {
+                    mHandler.postDelayed(this, 50);
+                }
+            }
+        });
+    }
+
+    // math helper - scales range of numbers
+    public double scale(final double valueIn, final double baseMin, final double baseMax, final double limitMin, final double limitMax) {
+        return ((limitMax - limitMin) * (valueIn - baseMin) / (baseMax - baseMin)) + limitMin;
+    }
+
+    @Override
+    public void onAnimationFinish() {
+        Log.d(TAG_Voice, "onRecordFinish");
+        mIsRecording = false;
+    }
 
     // Permission request
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -359,7 +369,5 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    // Logging tags
-    String TAG_REC = "recording";
-    String TAG_DB = "db_saving";
+
 }
