@@ -8,6 +8,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.support.v4.content.res.ResourcesCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -47,10 +50,29 @@ public class VoiceView extends View {
         init();
     }
 
+    public static Bitmap drawableToBitmap (Drawable drawable) {
+
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable)drawable).getBitmap();
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
+    }
+
     private void init(){
-        mNormalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.vs_micbtn_off);
-        mPressedBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.vs_micbtn_pressed);
-        mRecordingBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.vs_micbtn_on);
+        Drawable ic_mic_nrm = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_btn_wrk, null);
+        Drawable ic_mic_prsd = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_btn_wrk_prs, null);
+        Drawable ic_mic_on = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_btn_wrk_rec, null);
+
+        //mRecordingBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_microphone);
+        mNormalBitmap = drawableToBitmap(ic_mic_nrm);
+        mPressedBitmap = drawableToBitmap(ic_mic_prsd);
+        mRecordingBitmap = drawableToBitmap(ic_mic_on);
 
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
@@ -75,7 +97,7 @@ public class VoiceView extends View {
         int height = canvas.getHeight();
 
         if(mCurrentRadius > mMinRadius){
-            canvas.drawCircle(width / 2, height / 2.05f, mCurrentRadius, mPaint);
+            canvas.drawCircle(width / 2, height / 2, mCurrentRadius, mPaint);
         }
 
         switch (mState){
