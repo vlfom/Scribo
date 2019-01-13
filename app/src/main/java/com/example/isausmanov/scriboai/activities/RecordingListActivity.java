@@ -61,8 +61,6 @@ public class RecordingListActivity extends AppCompatActivity {
         listView = findViewById(R.id.recording_list);
         dataModels = new ArrayList<>();
 
-        setAdaptertoRecyclerView();
-
         fetchRecordings();
 
         listView.setOnItemClickListener((parent, view, position, id) -> {
@@ -215,6 +213,8 @@ public class RecordingListActivity extends AppCompatActivity {
         });
 
         initializeLM();
+
+        setAdaptertoRecyclerView();
     }
 
     private double detectSpeakerChange(double[][] data, int si1, int ei1, int si2, int ei2) {
