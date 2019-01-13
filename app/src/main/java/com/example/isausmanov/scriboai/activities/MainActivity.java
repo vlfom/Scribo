@@ -84,6 +84,19 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
             public void onClick(View v) {
                 Intent i = new Intent(MainActivity.this, RecordingListActivity.class);
                 startActivity(i);
+
+                /* For sharing
+                Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType("message/rfc822");
+                i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"isa.usmanov@tum.de"});
+                i.putExtra(Intent.EXTRA_SUBJECT, "EMAIL FROM SCRIBO");
+                i.putExtra(Intent.EXTRA_TEXT   , "Text text text text text");
+                try {
+                    startActivity(Intent.createChooser(i, "Send mail..."));
+                } catch (android.content.ActivityNotFoundException ex) {
+                    Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+                }
+                */
             }
         });
 

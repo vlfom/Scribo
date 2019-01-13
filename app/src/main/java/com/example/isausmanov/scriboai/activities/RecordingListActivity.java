@@ -27,7 +27,6 @@ public class RecordingListActivity extends AppCompatActivity {
     private List<RecordingDataModel> dataInList;
     private ListView listView;
     private RecordingListAdapter adapter;
-    private TextView textViewNoRecordings;
     private AppDatabase db;
 
     @Override
@@ -36,12 +35,12 @@ public class RecordingListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_recording_list);
 
         listView = findViewById(R.id.recording_list);
-        textViewNoRecordings = findViewById(R.id.textViewNoRecordings);
         dataModels = new ArrayList<>();
 
 
         fetchRecordings();
-
+        setAdaptertoRecyclerView();
+        //listView.setDivider(getDrawable(R.drawable.divider));
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -53,6 +52,7 @@ public class RecordingListActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+
     }
 
     private void fetchRecordings() {
@@ -76,10 +76,7 @@ public class RecordingListActivity extends AppCompatActivity {
         db.close();
         // Cast List into ArrayList
         dataModels = new ArrayList<>(dataInList);
-
-        textViewNoRecordings.setVisibility(View.GONE);
         listView.setVisibility(View.VISIBLE);
-        setAdaptertoRecyclerView();
     }
 
     private void setAdaptertoRecyclerView() {
