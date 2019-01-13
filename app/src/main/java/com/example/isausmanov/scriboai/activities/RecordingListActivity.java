@@ -48,7 +48,6 @@ public class RecordingListActivity extends AppCompatActivity {
     private List<RecordingDataModel> dataInList;
     private ListView listView;
     private RecordingListAdapter adapter;
-    private TextView textViewNoRecordings;
     private AppDatabase db;
 
     private static LanguageModel languageModel;
@@ -60,7 +59,6 @@ public class RecordingListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_recording_list);
 
         listView = findViewById(R.id.recording_list);
-        textViewNoRecordings = findViewById(R.id.textViewNoRecordings);
         dataModels = new ArrayList<>();
 
 
@@ -288,7 +286,6 @@ public class RecordingListActivity extends AppCompatActivity {
         // Cast List into ArrayList
         dataModels = new ArrayList<>(dataInList);
 
-        textViewNoRecordings.setVisibility(View.GONE);
         listView.setVisibility(View.VISIBLE);
         setAdaptertoRecyclerView();
     }

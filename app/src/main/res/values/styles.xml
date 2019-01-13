@@ -7,6 +7,8 @@
         <item name="colorPrimaryDark">@color/colorWhite</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:navigationBarColor">@color/colorWhite</item>
        <!-- <item name="android:statusBarColor">@color/colorPrimaryDark</item> -->
     </style>
 

@@ -9,13 +9,11 @@
 
     <ImageView
         android:id="@+id/list_item_image"
+        android:layout_marginTop="20dp"
         android:layout_width="24dp"
         android:layout_height="32dp"
         android:layout_alignParentLeft="true"
-        android:layout_centerVertical="true"
-        android:src="@drawable/ic_mic"
-        android:paddingBottom="8dp"
-        />
+        android:src="@drawable/ic_mic" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -24,12 +22,13 @@
         android:layout_alignParentTop="true"
         android:layout_centerInParent="true"
         android:layout_marginStart="47dp"
-        android:layout_marginTop="10dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="15dp"
+        android:layout_marginTop="15dp"
+
+        android:paddingBottom="10dp"
         android:orientation="vertical"
-        android:background="@drawable/recording_list_item_bg"
         >
+        <!-- android:background="@drawable/recording_list_item_bg" -->
+
 
         <TextView
             android:id="@+id/recording_name"
@@ -37,38 +36,40 @@
             android:layout_height="wrap_content"
             android:text="Recording 1"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textColor="#263238"
-            android:textSize="14sp"/>
+            android:textColor="#636363"
+            android:textSize="17sp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="2dp">
+            android:orientation="horizontal">
+
             <TextView
                 android:id="@+id/recording_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="19.11.18"
-                android:textSize="10sp"
+                android:textSize="12sp"
+                android:text="19.01.2013"
                 android:textColor="@android:color/darker_gray" />
 
             <TextView
                 android:id="@+id/recording_duration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="00:00:48"
-                android:textSize="10sp"
+                android:textSize="12sp"
+                android:text="00.00.12"
                 android:layout_marginLeft="7dp"
                 android:textColor="@android:color/darker_gray" />
+
         </LinearLayout>
 
     </LinearLayout>
 
     <Button
+        android:id="@+id/transcribe_button"
         android:layout_width="wrap_content"
         android:layout_height="25dp"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="20dp"
         android:layout_marginStart="250dp"
         android:padding="5dp"
         android:textSize="10sp"
@@ -76,4 +77,18 @@
         android:background="#13a5ff"
         android:textColor="@android:color/white"
         android:focusable="false"/>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="13dp"
+        android:layout_marginStart="265dp"
+        android:layout_weight="1"
+        android:background="@drawable/circle_shape"
+        android:progressDrawable="@drawable/circular_progress_bar"
+        android:visibility="gone"
+        android:max="100"
+        android:min="1"/>
 </RelativeLayout>
