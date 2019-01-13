@@ -61,6 +61,7 @@ public class RecordingListActivity extends AppCompatActivity {
         listView = findViewById(R.id.recording_list);
         dataModels = new ArrayList<>();
 
+        setAdaptertoRecyclerView();
 
         fetchRecordings();
 
@@ -285,9 +286,7 @@ public class RecordingListActivity extends AppCompatActivity {
         db.close();
         // Cast List into ArrayList
         dataModels = new ArrayList<>(dataInList);
-
         listView.setVisibility(View.VISIBLE);
-        setAdaptertoRecyclerView();
     }
 
     private void setAdaptertoRecyclerView() {

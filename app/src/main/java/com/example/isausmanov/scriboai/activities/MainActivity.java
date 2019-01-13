@@ -312,7 +312,7 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
             @Override
             public void run() {
                 // get amplitude from wavRecorder
-                double amplit = 0.1;
+                double amplit = wavRecorder.getAmplitude();
 
                 float radius = (float) scale(amplit, 1, 6500, 50, 520);
                 mVoiceView.animateRadius(radius);

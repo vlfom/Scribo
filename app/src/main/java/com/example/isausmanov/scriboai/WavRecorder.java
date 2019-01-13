@@ -10,22 +10,28 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 
 public class WavRecorder {
+
     private static final int RECORDER_BPP = 16; // 16000
     private static final String AUDIO_RECORDER_FOLDER = "AudioRecorder";
     private static final String AUDIO_RECORDER_TEMP_FILE = "record_temp.raw";
+    
     private static final int RECORDER_SAMPLERATE = 16000;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO; // Is this Mono = 1?
+
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     short[] audioData;
 
-    private AudioRecord recorder = null;
+    public double amplitude;
+    public AudioRecord recorder = null;
     private int bufferSize = 0;
     private Thread recordingThread = null;
+    private Thread amplitudeRecordingThread = null;
     private boolean isRecording = false;
-    int[] bufferData;
-    int bytesRecorded;
 
     private String output;
 
@@ -36,7 +42,6 @@ public class WavRecorder {
         audioData = new short[bufferSize]; // short array that pcm data is put
         // into.
         output = path;
-
     }
 
     private String getFilename() {
@@ -59,6 +64,7 @@ public class WavRecorder {
         return (file.getAbsolutePath() + "/" + AUDIO_RECORDER_TEMP_FILE);
     }
 
+
     private String filename;
     private FileOutputStream fos;
     private byte data[];
@@ -67,7 +73,7 @@ public class WavRecorder {
         data = new byte[bufferSize];
         filename = getTempFilename();
         fos = null;
-
+        double ampl;
         try {
             fos = new FileOutputStream(filename);
         } catch (FileNotFoundException e) {
@@ -79,6 +85,17 @@ public class WavRecorder {
             while (isRecording) {
                 read = recorder.read(data, 0, bufferSize);
                 if (read > 0) {
+                }
+
+
+                double sum = 0;
+                //int readSize = recorder.read(data, 0, bufferSize);
+                for (int i = 0; i < read; i++) {
+                    sum += data [i] * data [i];
+                }
+                if (read > 0) {
+                    ampl = sum / read;
+                    setAmplitude(ampl);
                 }
 
                 if (AudioRecord.ERROR_INVALID_OPERATION != read) {
@@ -97,9 +114,9 @@ public class WavRecorder {
             }
         }
     }
-
+    // Cisual effect test comment
     private void continueWritingAudioDataToFile() {
-
+        double ampl;
         try {
             fos = new FileOutputStream(filename, true);
         } catch (FileNotFoundException e) {
@@ -111,6 +128,14 @@ public class WavRecorder {
             while (isRecording) {
                 read = recorder.read(data, 0, bufferSize);
                 if (read > 0) {
+                }
+                double sum = 0;
+                for (int i = 0; i < read; i++) {
+                    sum += data [i] * data [i];
+                }
+                if (read > 0) {
+                    ampl = sum / read;
+                    setAmplitude(ampl);
                 }
 
                 if (AudioRecord.ERROR_INVALID_OPERATION != read) {
@@ -149,6 +174,15 @@ public class WavRecorder {
         }, "AudioRecorder Thread");
 
         recordingThread.start();
+
+    }
+
+
+    public void setAmplitude(double amplitude) {
+        this.amplitude = amplitude;
+    }
+    public double getAmplitude() {
+        return amplitude;
     }
 
     public void resumeRecording() {
@@ -164,7 +198,10 @@ public class WavRecorder {
             }
         }, "AudioRecorder Thread");
 
+      /**/
+
         recordingThread.start();
+
     }
 
     public void pauseRecording() {
@@ -174,6 +211,7 @@ public class WavRecorder {
             int i = recorder.getState();
             if (i == 1) recorder.stop();
             recordingThread = null;
+            amplitudeRecordingThread = null;
         }
     }
 
@@ -187,6 +225,7 @@ public class WavRecorder {
 
             recorder = null;
             recordingThread = null;
+            amplitudeRecordingThread = null;
         }
 
         copyWaveFile(getTempFilename(), getFilename());
@@ -285,4 +324,6 @@ public class WavRecorder {
 
         out.write(header, 0, 44);
     }
+
+
 }

@@ -159,12 +159,12 @@ public class VoiceView extends View {
                 if(mIsRecording){
                     mState = STATE_NORMAL;
                     if(mOnClickListener != null){
-                        mOnClickListener.onAnimationFinish();
+                      mOnClickListener.onAnimationFinish();
                     }
                 }else{
                     mState = STATE_RECORDING;
                     if(mOnClickListener != null){
-                        mOnClickListener.onAnimationStart();
+                       mOnClickListener.onAnimationStart();
                     }
                 }
                 mIsRecording = !mIsRecording;
