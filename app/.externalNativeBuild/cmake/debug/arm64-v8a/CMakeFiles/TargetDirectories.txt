@@ -1,0 +1,3 @@
+D:/AndroidStudioProjects/TechChallenge18/app/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/AndroidStudioProjects/TechChallenge18/app/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/hiai.dir
+D:/AndroidStudioProjects/TechChallenge18/app/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/rebuild_cache.dir

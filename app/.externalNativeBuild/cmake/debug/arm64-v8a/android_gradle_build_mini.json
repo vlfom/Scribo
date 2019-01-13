@@ -1,0 +1,21 @@
+{
+  "buildFiles": [
+    "D:\\AndroidStudioProjects\\TechChallenge18\\app\\CMakeLists.txt"
+  ],
+  "cleanCommands": [
+    "D:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\AndroidStudioProjects\\TechChallenge18\\app\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target clean"
+  ],
+  "libraries": {
+    "libai_client-Debug-arm64-v8a": {
+      "artifactName": "libai_client",
+      "abi": "arm64-v8a",
+      "output": "D:\\AndroidStudioProjects\\TechChallenge18\\app\\libs\\arm64-v8a\\libai_client.so"
+    },
+    "hiai-Debug-arm64-v8a": {
+      "artifactName": "hiai",
+      "buildCommand": "D:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\AndroidStudioProjects\\TechChallenge18\\app\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target hiai",
+      "abi": "arm64-v8a",
+      "output": "D:\\AndroidStudioProjects\\TechChallenge18\\app\\src\\main\\libs\\arm64-v8a\\libhiai.so"
+    }
+  }
+}

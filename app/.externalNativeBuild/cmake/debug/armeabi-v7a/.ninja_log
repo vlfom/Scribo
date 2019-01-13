@@ -1,0 +1,7 @@
+# ninja log v5
+9	857	0	CMakeFiles/hiai.dir/src/main/cpp/hiai_sync_jni.cpp.o	cf3699ae910a9d78
+2	894	0	CMakeFiles/hiai.dir/src/main/cpp/hiai_async_jni.cpp.o	16313630760ba659
+895	2547	0	../../../../src/main/libs/armeabi-v7a/libhiai.so	4c80bf269622db0a
+10	1058	0	CMakeFiles/hiai.dir/src/main/cpp/hiai_sync_jni.cpp.o	cf3699ae910a9d78
+4	1134	0	CMakeFiles/hiai.dir/src/main/cpp/hiai_async_jni.cpp.o	16313630760ba659
+1134	2752	0	../../../../src/main/libs/armeabi-v7a/libhiai.so	4c80bf269622db0a

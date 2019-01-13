@@ -131,11 +131,11 @@ public class RecordingListActivity extends AppCompatActivity {
             ArrayList<Integer> speakerChanged = new ArrayList<>(
                     Collections.nCopies(transcriptionWords.size(), 0)
             );
-            int wordToBegin = -1, wordToEnd = -1;
+            int wordToBegin = Integer.MAX_VALUE, wordToEnd = -1;
             for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
                 int frameNum = (int)(transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
 
-                if (frameNum - 1 >= 224 && wordToBegin == -1) {
+                if (frameNum - 1 >= 224 && wordToBegin == Integer.MAX_VALUE) {
                     wordToBegin = i;
                 }
 

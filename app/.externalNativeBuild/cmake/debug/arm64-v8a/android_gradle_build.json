@@ -1,0 +1,52 @@
+
+{
+	"buildFiles" : [ "D:/AndroidStudioProjects/TechChallenge18/app/CMakeLists.txt" ],
+	"cleanCommands" : 
+	[
+		"D:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\AndroidStudioProjects\\TechChallenge18\\app\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target clean"
+	],
+	"cppFileExtensions" : [ "cpp" ],
+	"libraries" : 
+	{
+		"hiai-Debug-arm64-v8a" : 
+		{
+			"abi" : "arm64-v8a",
+			"artifactName" : "hiai",
+			"buildCommand" : "D:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\AndroidStudioProjects\\TechChallenge18\\app\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target hiai",
+			"buildType" : "debug",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android27 --gcc-toolchain=D:/AndroidSDK/ndk-bundle/toolchains/aarch64-linux-android-4.9/prebuilt/windows-x86_64 --sysroot=D:/AndroidSDK/ndk-bundle/sysroot  -Dhiai_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include -isystem D:\\AndroidSDK\\ndk-bundle\\sources\\cxx-stl\\llvm-libc++\\include -isystem D:\\AndroidSDK\\ndk-bundle\\sources\\cxx-stl\\llvm-libc++abi\\include  -isystem D:/AndroidSDK/ndk-bundle/sysroot/usr/include/aarch64-linux-android -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -std=c++11 -std=c++11 -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC    -c ",
+					"src" : "D:/AndroidStudioProjects/TechChallenge18/app/src/main/cpp/hiai_async_jni.cpp",
+					"workingDirectory" : "D:/AndroidStudioProjects/TechChallenge18/app/.externalNativeBuild/cmake/debug/arm64-v8a"
+				},
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android27 --gcc-toolchain=D:/AndroidSDK/ndk-bundle/toolchains/aarch64-linux-android-4.9/prebuilt/windows-x86_64 --sysroot=D:/AndroidSDK/ndk-bundle/sysroot  -Dhiai_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include -isystem D:\\AndroidSDK\\ndk-bundle\\sources\\cxx-stl\\llvm-libc++\\include -isystem D:\\AndroidSDK\\ndk-bundle\\sources\\cxx-stl\\llvm-libc++abi\\include  -isystem D:/AndroidSDK/ndk-bundle/sysroot/usr/include/aarch64-linux-android -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -std=c++11 -std=c++11 -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC    -c ",
+					"src" : "D:/AndroidStudioProjects/TechChallenge18/app/src/main/cpp/hiai_sync_jni.cpp",
+					"workingDirectory" : "D:/AndroidStudioProjects/TechChallenge18/app/.externalNativeBuild/cmake/debug/arm64-v8a"
+				}
+			],
+			"output" : "D:/AndroidStudioProjects/TechChallenge18/app/src/main/libs/arm64-v8a/libhiai.so",
+			"toolchain" : "3745389449"
+		},
+		"libai_client-Debug-arm64-v8a" : 
+		{
+			"abi" : "arm64-v8a",
+			"artifactName" : "libai_client",
+			"buildType" : "debug",
+			"output" : "D:/AndroidStudioProjects/TechChallenge18/app/libs/arm64-v8a/libai_client.so",
+			"toolchain" : "3745389449"
+		}
+	},
+	"toolchains" : 
+	{
+		"3745389449" : 
+		{
+			"cCompilerExecutable" : "D:/AndroidSDK/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe",
+			"cppCompilerExecutable" : "D:/AndroidSDK/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe"
+		}
+	}
+}
