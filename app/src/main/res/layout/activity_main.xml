@@ -8,39 +8,44 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
+    <com.example.isausmanov.scriboai.VoiceView
+        android:id="@+id/voiceview"
+        android:layout_width="190dp"
+        android:layout_height="210dp"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="60dp"
+        android:background="#FFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.248"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Chronometer
         android:id="@+id/chronometerTimer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="108dp"
-        android:layout_marginBottom="250dp"
+        android:layout_marginBottom="104dp"
         android:textColor="@android:color/darker_gray"
         android:textSize="60sp"
-        app:layout_constraintBottom_toTopOf="@+id/rec_btn"
+        app:layout_constraintBottom_toTopOf="@+id/voiceview"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:id="@+id/rec_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="148dp"
-        android:layout_marginEnd="148dp"
-        android:layout_marginBottom="16dp"
-        android:text="Record"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:id="@+id/list_btn"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginBottom="16dp"
-        android:text="List"
+        android:drawableTop="@drawable/ic_list_cstm"
+        android:drawableTint="@color/colorAccent"
+        android:drawablePadding="5dp"
+
+        android:text="Recordings"
+        android:textSize="10dp"
+        android:fontFamily="monospace"
+        android:textColor="@color/colorGray"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -51,7 +56,13 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="16dp"
-        android:text="Save"
+        android:drawableTop="@drawable/ic_stop_button"
+        android:drawableTint="@color/colorAccent"
+        android:drawablePadding="5dp"
+        android:text="Stop"
+        android:textSize="10dp"
+        android:fontFamily="monospace"
+        android:textColor="@color/colorGray"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
