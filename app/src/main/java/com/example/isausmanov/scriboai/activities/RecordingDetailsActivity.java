@@ -2,6 +2,7 @@ package com.example.isausmanov.scriboai.activities;
 
 import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,8 +24,12 @@ import com.example.isausmanov.scriboai.R;
 import com.example.isausmanov.scriboai.RecordingDataModel;
 import com.example.isausmanov.scriboai.ctc_decoder.DummyData;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class RecordingDetailsActivity extends AppCompatActivity {
@@ -37,6 +42,10 @@ public class RecordingDetailsActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Handler threadHandler = new Handler();
     private MediaPlayer mediaPlayer;
+
+    private ArrayList<String> transcriptionWords;
+    private ArrayList<Integer> transcriptionTimes;
+    private ArrayList<Integer> transcriptionSpeakerChanged;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,31 +72,22 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         int songId = this.getRawResIdByName("template_song");
 
         // Create MediaPlayer.
-        this.mediaPlayer = MediaPlayer.create(this, songId);
+        //this.mediaPlayer = MediaPlayer.create(this, songId);
+        String songURI = getIntent().getStringExtra("AUDIO_URI");
+        File songFile = new File(songURI);
+        this.mediaPlayer = MediaPlayer.create(this, Uri.fromFile(songFile));
 
-        String transcription = getIntent().getStringExtra("AUDIO_TRANSCRIPTION");
-        setTranscriptionContent(transcription.substring(0, 1).toUpperCase() + transcription.substring(1));
 
-        setTranscriptionContent(transcription.substring(0, 1).toUpperCase() + transcription.substring(1));
-        //setTranscriptionContent(RecordingDataModel.transcription_words, null);
+        this.transcriptionTimes = (ArrayList<Integer>) getIntent().getSerializableExtra("AUDIO_WORD_TIMES");
+
+        this.transcriptionSpeakerChanged = (ArrayList<Integer>) getIntent().getSerializableExtra("AUDIO_SPEAKER_CHANGED");
+
+        this.transcriptionWords = (ArrayList<String>) getIntent().getSerializableExtra("AUDIO_TRANSCRIPTION");
+
+        setTranscriptionContent(this.transcriptionWords, null);
     }
 
-    private void setTranscriptionContent(String content) {
-        StringBuilder text = new StringBuilder();
-        String header = "<html>\n" +
-                "<head></head>\n" +
-                "<body style=\"text-align:justify;color:rgb(100, 100, 100);font-size:16px;background:transparent;\">\n";
-        String footer = "</body>\n" +
-                "</html>";
-
-        text.append(content);
-
-        text.append(footer);
-
-        textTranscription.loadData(text.toString(), "text/html; charset=utf-8", "utf-8");
-    }
-
-    private void setTranscriptionContent(ArrayList<String> words, Integer index) {
+    private void setTranscriptionContent(List<String> words, Integer index) {
         StringBuilder text = new StringBuilder();
         String header = "<html>\n" +
                 "<head></head>\n" +
@@ -100,6 +100,9 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         String word;
         if (index == null) {
             for (int i = 0; i < words.size(); ++i) {
+                if (transcriptionSpeakerChanged.get(i) == 1) {
+                    text.append("<br>Speaker<br>");
+                }
                 word = words.get(i);
                 if (i > 0 && !word.equals(".")) {
                     text.append(" ");
@@ -109,11 +112,17 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         }
         else {
             for (int i = 0; i < index; ++i) {
+                if (transcriptionSpeakerChanged.get(i) == 1) {
+                    text.append("<br>Speaker<br>");
+                }
                 word = words.get(i);
                 if (i > 0 && !word.equals(".")) {
                     text.append(" ");
                 }
                 text.append(word);
+            }
+            if (transcriptionSpeakerChanged.get(index) == 1) {
+                text.append("<br>Speaker<br>");
             }
             text.append("<span style=\"background-color: #ddebff;\">");
             word = words.get(index);
@@ -124,6 +133,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
                 if (index > 0) {
                     text.append(" ");
                 }
+
                 text.append(word);
 
                 if (index + 1 < words.size() && words.get(index + 1).equals(".")) {
@@ -135,6 +145,9 @@ public class RecordingDetailsActivity extends AppCompatActivity {
             }
             text.append("</span>");
             for (int i = index + 1; i < words.size(); ++i) {
+                if (transcriptionSpeakerChanged.get(i) == 1) {
+                    text.append("<br>Speaker<br>");
+                }
                 word = words.get(i);
                 if (i > 0 && !word.equals(".") && i != index + 1) {
                     text.append(" ");
@@ -228,23 +241,23 @@ public class RecordingDetailsActivity extends AppCompatActivity {
             textTime.setText(currentPositionStr);
             seekBar.setProgress(currentPosition);
 
-            int index = Collections.binarySearch(RecordingDataModel.transcription_word_times, currentPosition);
+            int index = Collections.binarySearch(transcriptionTimes, currentPosition);
             if (index != previousIndex) {
                 previousIndex = index;
 
                 if (index == -1) {
-                    setTranscriptionContent(RecordingDataModel.transcription_words, null);
+                    setTranscriptionContent(transcriptionWords, null);
                 }
                 else {
                     if (index < 0) {
                         index = -index - 2;
                     }
 
-                    if (RecordingDataModel.transcription_words.get(index).equals(".")) {
+                    if (transcriptionWords.get(index).equals(".")) {
                         index -= 1;
                     }
 
-                    setTranscriptionContent(RecordingDataModel.transcription_words, index);
+                    setTranscriptionContent(transcriptionWords, index);
                 }
             }
 

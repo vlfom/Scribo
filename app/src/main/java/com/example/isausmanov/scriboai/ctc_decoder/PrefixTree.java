@@ -1,5 +1,6 @@
 package com.example.isausmanov.scriboai.ctc_decoder;
 
+import android.util.SparseArray;
 import java.util.*;
 
 public class PrefixTree {
@@ -35,14 +36,14 @@ public class PrefixTree {
     public void addBigram(Integer word_encoded, String word2, Double prob) {
         Node node = root;
 
-        if (root.bigramChildrenCount.containsKey(word_encoded)) {
+        if (root.bigramChildrenCount.get(word_encoded, null) != null) {
             root.bigramChildrenCount.put(word_encoded, root.bigramChildrenCount.get(word_encoded) + 1);
         }
         else {
             root.bigramChildrenCount.put(word_encoded, 1);
         }
 
-        if (root.bigramChildrenSum.containsKey(word_encoded)) {
+        if (root.bigramChildrenSum.get(word_encoded, null) != null) {
             root.bigramChildrenSum.put(word_encoded, root.bigramChildrenSum.get(word_encoded) + prob);
         }
         else {
@@ -53,14 +54,14 @@ public class PrefixTree {
             char c = word2.charAt(i);
             node = node.children.get(c);
 
-            if (node.bigramChildrenSum.containsKey(word_encoded)) {
+            if (node.bigramChildrenSum.get(word_encoded, null) != null) {
                 node.bigramChildrenSum.put(word_encoded, node.bigramChildrenSum.get(word_encoded) + prob);
             }
             else {
                 node.bigramChildrenSum.put(word_encoded, prob);
             }
 
-            if (node.bigramChildrenCount.containsKey(word_encoded)) {
+            if (node.bigramChildrenCount.get(word_encoded, null) != null) {
                 node.bigramChildrenCount.put(word_encoded, node.bigramChildrenCount.get(word_encoded) + 1);
             }
             else {
@@ -143,7 +144,7 @@ public class PrefixTree {
     public Double getBigramProb(Integer prev_word_encoded, String prev_word, String text, Integer totalWordsCount, Integer vocabularySize) {
         Node node = getNode(text);
         if (node != null) {
-            return node.bigramProb.getOrDefault(prev_word_encoded,
+            return node.bigramProb.get(prev_word_encoded,
                     1.0 / (getUnigramProb(prev_word) * totalWordsCount + vocabularySize));
         }
 
@@ -155,8 +156,8 @@ public class PrefixTree {
         if (node != null) {
             double word_count = getUnigramProb(prev_word) * (totalWordsCount + vocabularySize) - 1;
 
-            return node.bigramChildrenSum.getOrDefault(prev_word_encoded, 0.) +
-                    (node.childrenNum - node.bigramChildrenCount.getOrDefault(prev_word_encoded, 0)) * 1.0 / (word_count + vocabularySize);
+            return node.bigramChildrenSum.get(prev_word_encoded, 0.) +
+                    (node.childrenNum - node.bigramChildrenCount.get(prev_word_encoded, 0)) * 1.0 / (word_count + vocabularySize);
         }
 
         return null;
@@ -187,9 +188,9 @@ public class PrefixTree {
         public boolean isWord;
         public double unigramProb;
         public double unigramChildrenSum;
-        public HashMap<Integer, Double> bigramProb;
-        public HashMap<Integer, Double> bigramChildrenSum;
-        public HashMap<Integer, Integer> bigramChildrenCount;
+        public SparseArray<Double> bigramProb;
+        public SparseArray<Double> bigramChildrenSum;
+        public SparseArray<Integer> bigramChildrenCount;
         public int childrenNum;
 
         public Node() {
@@ -201,9 +202,9 @@ public class PrefixTree {
             this.unigramProb = 0;
             this.unigramChildrenSum = 0;
 
-            this.bigramProb = new HashMap<>();
-            this.bigramChildrenSum = new HashMap<>();
-            this.bigramChildrenCount = new HashMap<>();
+            this.bigramProb = new SparseArray<>();
+            this.bigramChildrenSum = new SparseArray<>();
+            this.bigramChildrenCount = new SparseArray<>();
         }
 
         public String toString() {

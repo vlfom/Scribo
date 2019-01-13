@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -16,6 +17,7 @@ import com.example.isausmanov.scriboai.ctc_decoder.LanguageModel;
 import com.example.isausmanov.scriboai.ctc_decoder.WordBeamSearch;
 import com.example.isausmanov.scriboai.database.AppDatabase;
 import com.example.isausmanov.scriboai.mfcc.MFCC;
+import com.example.isausmanov.scriboai.model.SpeakerchangedetectionModel;
 import com.example.isausmanov.scriboai.model.SpeechrecognitionModel;
 import com.example.isausmanov.scriboai.wav_reader.WavFile;
 import com.example.isausmanov.scriboai.wav_reader.WavFileException;
@@ -33,6 +35,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -65,68 +69,189 @@ public class RecordingListActivity extends AppCompatActivity {
         listView.setOnItemClickListener((parent, view, position, id) -> {
             RecordingDataModel dataModel = dataModels.get(position);
 
-            float[] input = load_wav_data(dataModel.getUri(), false);
-            //float[] input = load_wav_data("example.wav", true);
+            Pair<float[], Pair<double[][], Double>> transcriptionData = getTranscriptionProbabilities(dataModel.getUri());
+            double[][] fullMFCC = transcriptionData.second.first;
+            double audioDuration = transcriptionData.second.second;
 
-            Log.d("CoolModel", dataModel.getUri());
-            SpeechrecognitionModel.load(getAssets());
+            Pair<String, ArrayList> res = decodeCTCMatrix(transcriptionData.first);
 
-            Log.d("CoolStuff", String.valueOf(input[1000]));
-            Log.d("CoolStuff", String.valueOf(input[10000]));
-            Log.d("CoolStuff", String.valueOf(input[14239]));
-            Log.d("CoolStuff", String.valueOf(input[14240]));
-            float[] model_result = SpeechrecognitionModel.predict(input);
+            ArrayList<Integer> transcriptionWordTimes = res.second;
+            for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
+                if (transcriptionWordTimes.get(i) * 2 * 255.8 / 16 >= audioDuration * 1000) {
+                    transcriptionWordTimes = new ArrayList<>(transcriptionWordTimes.subList(0, i));
+                    break;
+                }
+                transcriptionWordTimes.set(i, (int)(transcriptionWordTimes.get(i) * 2 * 255.8 / 16));
+            }
 
-            SpeechrecognitionModel.unload();
+            ArrayList<String> transcriptionWords = new ArrayList<>();
+            String[] wordCandidates = res.first.split(" ");
+            for (String wordCandidate : wordCandidates) {
+                if (wordCandidate.equals("")){
+                    continue;
+                }
+                transcriptionWords.add(wordCandidate);
 
-            String text = decodeCTCMatrix(model_result);
+                if (transcriptionWords.size() == transcriptionWordTimes.size()) {
+                    break;
+                }
+            }
+
+            for (int i = 0; i < fullMFCC.length; ++i) {
+                double max = Double.MIN_VALUE;
+                for (int j = 0; j < 16; ++j) {
+                    max = Math.max(max, fullMFCC[i][j]);
+                }
+                for (int j = 0; j < 16; ++j) {
+                    fullMFCC[i][j] = fullMFCC[i][j] / max;
+                }
+            }
+
+            double mfcc_mean = 0;
+            double mfcc_std = 0;
+            for (int i = 0; i < fullMFCC.length; ++i) {
+                for (int j = 0; j < 16; ++j) {
+                    mfcc_mean += fullMFCC[i][j];
+                }
+            }
+
+            mfcc_mean /= fullMFCC.length * 16;
+
+            for (int i = 0; i < fullMFCC.length; ++i) {
+                for (int j = 0; j < 16; ++j) {
+                    mfcc_std += Math.pow(fullMFCC[i][j] - mfcc_mean, 2);
+                }
+            }
+
+            mfcc_std = Math.sqrt(mfcc_std / (fullMFCC.length * 16));
+
+            for (int i = 0; i < fullMFCC.length; ++i) {
+                for (int j = 0; j < 16; ++j) {
+                    fullMFCC[i][j] = (fullMFCC[i][j] - mfcc_mean) / mfcc_std;
+                }
+            }
+
+            ArrayList<Integer> speakerChanged = new ArrayList<>(
+                    Collections.nCopies(transcriptionWords.size(), 0)
+            );
+            int wordToBegin = -1, wordToEnd = -1;
+            for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
+                int frameNum = (int)(transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
+
+                if (frameNum - 1 >= 224 && wordToBegin == -1) {
+                    wordToBegin = i;
+                }
+
+                if (fullMFCC.length - frameNum >= 224) {
+                    wordToEnd = i;
+                }
+            }
+
+            double[] differences = new double[Math.max(0, wordToEnd - wordToBegin + 1)];
+            SpeakerchangedetectionModel.load(getAssets());
+            for (int i = wordToBegin; i <= wordToEnd; ++i) {
+                int middleFrame = (int) (transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
+                differences[i - wordToBegin] = detectSpeakerChange(
+                        fullMFCC,
+                        middleFrame - 1 - 224, middleFrame - 1,
+                        middleFrame, middleFrame + 224
+                );
+            }
+            SpeakerchangedetectionModel.unload();
+
+            double maxDifference = Double.MIN_VALUE;
+            for (double difference : differences) {
+                maxDifference = Math.max(maxDifference, difference);
+            }
+            for (int i = 0; i < differences.length; ++i) {
+                differences[i] /= maxDifference;
+                if (differences[i] >= 5) {
+                    speakerChanged.set(i + wordToBegin, 1);
+                }
+            }
+            Log.d("Coolest", Arrays.toString(new ArrayList[]{transcriptionWords}));
+
+            // Add dots
+            int[] needDotAfter = new int[transcriptionWords.size()];
+            for (int i = 5; i < transcriptionWords.size(); ++i) {
+                long hash = 0;
+                for (int j = i-5; j <= i; ++j) {
+//                    Log.d("Coolest", String.valueOf(languageModel));
+//                    Log.d("Coolest", String.valueOf(languageModel.wordToPostag));
+//                    Log.d("Coolest", transcriptionWords.get(j));
+                    hash = hash * 35 + languageModel.wordToPostag.get(transcriptionWords.get(j));
+                }
+                Log.d("Coolest", String.valueOf(hash));
+                if (languageModel.posTagSequenceDotHash.contains(hash)) {
+                    needDotAfter[i - 3] = 1;
+                }
+            }
+            Log.d("Coolest", String.valueOf(languageModel.posTagSequenceDotHash.contains(1385650630L)));
+
+            // Capitalize 1st word
+            transcriptionWords.set(0,
+                    transcriptionWords.get(0).substring(0, 1).toUpperCase() + transcriptionWords.get(0).substring(1));
+
+            for (int i = 0; i < transcriptionWords.size(); ++i) {
+                if (needDotAfter[i] == 1) {
+                    transcriptionWords.set(i, transcriptionWords.get(i) + ".");
+                    transcriptionWords.set(i + 1,
+                            transcriptionWords.get(i + 1).substring(0, 1).toUpperCase() + transcriptionWords.get(i + 1).substring(1));
+                }
+            }
+
+            // Add dot in the end
+            transcriptionWords.set(transcriptionWords.size() - 1,
+                    transcriptionWords.get(transcriptionWords.size() - 1) + ".");
+
+            Log.d("Coolest", Arrays.toString(differences));
+            Log.d("Coolest", Arrays.toString(new ArrayList[]{speakerChanged}));
 
             Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
-            i.putExtra("AUDIO_TRANSCRIPTION", text);
+            i.putExtra("AUDIO_URI", dataModel.getUri());
+            i.putExtra("AUDIO_TRANSCRIPTION", transcriptionWords);
+            i.putExtra("AUDIO_WORD_TIMES", transcriptionWordTimes);
+            i.putExtra("AUDIO_SPEAKER_CHANGED", speakerChanged);
             startActivity(i);
         });
 
         initializeLM();
     }
 
-    private void initializeLM() {
-//        languageModel = new LanguageModel(
-//                "he went into the scheme with his whole heart",
-//                "' abcdefghijklmnopqrstuvwxyz",
-//                "abcdefghijklmnopqrstuvwxyz"
-//        );
+    private double detectSpeakerChange(double[][] data, int si1, int ei1, int si2, int ei2) {
+        float[] embedding1, embedding2;
+        float[] input = new float[3584];
 
-//        StringBuilder contentBuilder = new StringBuilder();
-//
-//        try (Stream<String> stream = new BufferedReader(
-//                new InputStreamReader(getAssets().open("cleaned_words_10k.txt"))
-//        ).lines())
-//        {
-//            stream.forEach(s -> contentBuilder.append(s).append("\n"));
-//        }
-//        catch (IOException e)
-//        {
-//            e.printStackTrace();
-//        }
-//        languageModel = new LanguageModel(
-//                contentBuilder.toString(),
-//                "' abcdefghijklmnopqrstuvwxyz",
-//                "abcdefghijklmnopqrstuvwxyz"
-//        );
-
-
-        // Read file from assets
-        FileInputStream iStreamUnigram;
-        try {
-            iStreamUnigram = getApplicationContext().getAssets().openFd("unigram_10k.txt").createInputStream();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
+        for (int i = si1; i < ei1; ++i) {
+            for (int j = 0 ; j < 16; ++j) {
+                input[(i - si1) * 16 + j] = (float) data[i][j];
+            }
         }
+        embedding1 = SpeakerchangedetectionModel.predict(input);
 
-        FileInputStream iStreamBigram;
+        for (int i = si2; i < ei2; ++i) {
+            for (int j = 0 ; j < 16; ++j) {
+                input[(i - si2) * 16 + j] = (float) data[i][j];
+            }
+        }
+        embedding2 = SpeakerchangedetectionModel.predict(input);
+
+        double similarity = 0;
+        for (int i = 0; i < 32; ++i) {
+            similarity += Math.pow(embedding1[i] - embedding2[i], 2);
+        }
+        similarity = Math.sqrt(similarity);
+
+        return similarity;
+    }
+
+    private void initializeLM() {
+        // Read file from assets
+        FileInputStream iStreamCorpus;
+        FileInputStream iStreamPostag;
         try {
-            iStreamBigram = getApplicationContext().getAssets().openFd("bigram_10k.txt").createInputStream();
+            iStreamCorpus = getApplicationContext().getAssets().openFd("data_10kwords_1mlines_postag.txt").createInputStream();
+            iStreamPostag = getApplicationContext().getAssets().openFd("postag_dot_data.txt").createInputStream();
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -134,8 +259,8 @@ public class RecordingListActivity extends AppCompatActivity {
 
         Log.d("CoolModel", "Working!");
         languageModel = new LanguageModel(
-                iStreamUnigram,
-                iStreamBigram,
+                iStreamCorpus,
+                iStreamPostag,
                 "' abcdefghijklmnopqrstuvwxyz",
                 "abcdefghijklmnopqrstuvwxyz",
                 LanguageModel.NGRAM_BIGRAM
@@ -143,7 +268,6 @@ public class RecordingListActivity extends AppCompatActivity {
     }
 
     private void fetchRecordings() {
-
         /*
         new Thread(new Runnable() {
             public void run() {
@@ -174,76 +298,6 @@ public class RecordingListActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
     }
 
-    public static double[][] getMFCC(FileInputStream iStream) throws IOException, WavFileException {
-        WavFile wavFile = WavFile.openWavFile(iStream);
-
-        // Max buffer size; currently set to 5.11 secs
-        int buffer_size = 245280;
-
-        double[] temp_buffer = new double[buffer_size];
-
-        // Read file into temp buffer
-        int wavFramesCount = wavFile.readFrames(temp_buffer, buffer_size);
-
-        wavFile.close();
-
-        // Write file to specific buffer for MFCC
-        // TODO: try remove this buffer copy and use previous buffer
-        double[] buffer = new double[wavFramesCount];
-        for (int s = 0 ; s < wavFramesCount ; s++)
-        {
-            buffer[s] = 32768 * temp_buffer[s];
-        }
-
-        // Get MFCC
-        MFCC mfcc = new MFCC();
-        double[][] mfcc_data = mfcc.process(buffer);
-
-        // Normalization stuff
-//        double[] means = {7.17412761e+02,  8.09448977e+01, -3.22094204e+00,  2.67395995e+01,
-//                -2.95364379e+00, -1.68174362e+00, -7.54160070e+00, -6.30995971e+00,
-//                -2.19392249e+00, -2.69355131e+00, -3.47557558e+00, -1.61287202e+00,
-//                -6.99222589e-01, -1.01427192e-01, -3.19738535e+00, -1.41767440e+00};
-//        double[] std = {132.31567292,  62.67935034,  38.41606962,  31.46123938,
-//                24.54817898,  20.31396172,  18.21243215,  17.26334167,
-//                14.77640526,  13.54350092,  11.62770688,  11.31913029,
-//                10.59833541,  10.04452268,   9.63493706,   9.03885952};
-
-        double[] means = new double [16];
-        double[] std = new double [16];
-
-        for (int j = 0; j < 16; ++j) {
-            for (int i = 0; i < mfcc_data[0].length; ++i) {
-                means[j] += mfcc_data[j][i];
-            }
-            means[j] /= mfcc_data[0].length;
-        }
-
-        for (int j = 0; j < 16; ++j) {
-            for (int i = 0; i < mfcc_data[0].length; ++i) {
-                std[j] += (mfcc_data[j][i] - means[j]) * (mfcc_data[j][i] - means[j]);
-            }
-            std[j] /= mfcc_data[0].length;
-            std[j] = Math.sqrt(std[j]);
-        }
-
-        for (int j = 0; j < 16; ++j) {
-            for (int i = 0; i < mfcc_data[0].length; ++i) {
-                mfcc_data[j][i] = (mfcc_data[j][i] - means[j]) / std[j];
-            }
-        }
-
-        // Pad MFCC to fixed shape (960, 16)
-//        double[][] mfcc_padded = new double[960][16];
-//        for (int i = 0; i < mfcc_data[0].length; ++i) {
-//            for (int j = 0; j < 16; ++j) {
-//                mfcc_padded[i][j] = (mfcc_data[j][i] - means[j]) / std[j];
-//            }
-//        }
-
-        return mfcc_data;
-    }
-
     private double[][] cnn_process(double[][] data, int kernel_w, int stride_w) {
         double[][] res = new double[480][160];
 
@@ -262,71 +316,126 @@ public class RecordingListActivity extends AppCompatActivity {
         return res;
     }
 
-    private float[] load_wav_data(String fileURI, boolean fromAssets) {
-        // Read file from assets
-        FileInputStream iStream;
-        try {
-            if (fromAssets) {
-                iStream = getApplicationContext().getAssets().openFd(fileURI).createInputStream();
+    private Pair<String, ArrayList> decodeCTCMatrix(float[] prediction) {
+        double[][] matrix = new double[prediction.length / 32][32];
+        for (int i = 0; i < matrix.length; ++i) {
+            double sum = 0;
+            for (int j = 1; j < 29; ++j) {
+                matrix[i][j] = Math.exp(prediction[i * 32 + j]);
+                sum += matrix[i][j];
             }
-            else {
-                iStream = new FileInputStream(new File(fileURI));
+            for (int j = 1; j < 29; ++j) {
+                matrix[i][j] /= sum;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
         }
 
-        // Get MFCC features from example file
-        double[][] mfcc_data;
+        // Do BeamSearch
+        return WordBeamSearch.search(matrix, 50, languageModel);
+    }
+
+    private Pair<float[], Pair<double[][], Double>> getTranscriptionProbabilities(String fileURI) {
+        float[] stackedOutputs;
+        double[][] fullMFCC;
+        double audioLength = 0;
+
         try {
-            mfcc_data = getMFCC(iStream);
+            SpeechrecognitionModel.load(getAssets());
+            MFCC mfcc = new MFCC();
+            LinkedList<double[][]> modelInputs = new LinkedList<>();
+            LinkedList<float[]> modelOutputs = new LinkedList<>();
+
+            // Read file
+            FileInputStream iStream = new FileInputStream(new File(fileURI));
+            WavFile wavFile = WavFile.openWavFile(iStream);
+
+            while(true) {
+                // Max buffer size; currently set to 15.35 secs
+                int buffer_size = 245600;
+
+                double[] temp_buffer = new double[buffer_size];
+
+                // Read file into temp buffer
+                int wavFramesCount = wavFile.readFrames(temp_buffer, buffer_size);
+
+                audioLength += wavFramesCount / 16000.;
+
+                // Write file to specific buffer for MFCC
+                double[] buffer = new double[wavFramesCount];
+                for (int s = 0; s < wavFramesCount; s++) {
+                    buffer[s] = 32768 * temp_buffer[s];
+                }
+
+                // Get MFCC
+                double[][] mfcc_data = mfcc.process(buffer);
+
+                modelInputs.add(mfcc_data);
+
+                double[] means = new double[16];
+                double[] std = new double[16];
+
+                for (int j = 0; j < 16; ++j) {
+                    for (int i = 0; i < mfcc_data[0].length; ++i) {
+                        means[j] += mfcc_data[j][i];
+                    }
+                    means[j] /= mfcc_data[0].length;
+                }
+
+                for (int j = 0; j < 16; ++j) {
+                    for (int i = 0; i < mfcc_data[0].length; ++i) {
+                        std[j] += (mfcc_data[j][i] - means[j]) * (mfcc_data[j][i] - means[j]);
+                    }
+                    std[j] /= mfcc_data[0].length;
+                    std[j] = Math.sqrt(std[j]);
+                }
+
+                for (int j = 0; j < 16; ++j) {
+                    for (int i = 0; i < mfcc_data[0].length; ++i) {
+                        mfcc_data[j][i] = (mfcc_data[j][i] - means[j]) / std[j];
+                    }
+                }
+
+                // Apply CNN preprocessing
+                double[][] data_cnn;
+                data_cnn = cnn_process(mfcc_data, 10, 2);
+
+                // Unravel input
+                float[] input = new float[76800 + 256];
+                for (int i = 0; i < 76800; ++i) {
+                    input[i] = (float) data_cnn[i / 160][i % 160];
+                }
+
+                float[] model_result = SpeechrecognitionModel.predict(input);
+                modelOutputs.add(model_result);
+
+                if (wavFramesCount < buffer_size) {
+                    wavFile.close();
+                    break;
+                }
+            }
+
+            fullMFCC = new double[960 * (modelInputs.size() - 1) + modelInputs.getLast()[0].length][16];
+            for (int i = 0; i < modelInputs.size(); ++i) {
+                for (int j = 0; j < modelInputs.get(i)[0].length; ++j) {
+                    for (int k = 0; k < 16; ++k) {
+                        fullMFCC[i * 960 + j][k] = modelInputs.get(i)[k][j];
+                    }
+                }
+            }
+
+            stackedOutputs = new float[480 * 32 * modelOutputs.size()];
+            for (int i = 0; i < modelOutputs.size(); ++i) {
+                for (int j = 0; j < 480 * 32; ++j) {
+                    stackedOutputs[480 * 32 * i + j] = modelOutputs.get(i)[j];
+                }
+            }
+
+            SpeechrecognitionModel.unload();
+
         } catch (IOException | WavFileException e) {
             e.printStackTrace();
             return null;
         }
 
-        // Apply CNN preprocessing
-        double[][] data_cnn;
-        data_cnn = cnn_process(mfcc_data, 10, 2);
-
-//        Log.d("CoolStuff", String.valueOf(data_cnn[50][0]));
-//        Log.d("CoolStuff", String.valueOf(data_cnn[88][0]));
-//        Log.d("CoolStuff", String.valueOf(data_cnn[89][0]));
-//        Log.d("CoolStuff", String.valueOf(data_cnn[400][0]));
-
-        // Unravel input
-        float[] input = new float[76800 + 128];
-        for (int i = 0; i < 76800; ++i) {
-            input[i] = (float) data_cnn[i / 160][i % 160];
-        }
-//        for (int i = 256; i < 77056; ++i) {
-//            input[i] = (float) data_cnn[(i-256) / 160][(i-256) % 160];
-//        }
-        return input;
-    }
-
-    private String decodeCTCMatrix(float[] prediction) {
-        double[][] matrix = new double[480][32];
-        Log.d("ModelOutput", String.valueOf(matrix[10][0]));
-        for (int i = 0; i < 480; ++i) {
-            double sum = 0;
-            for (int j = 0; j < 29; ++j) {
-                if (i * 32 + j > prediction.length) {
-                    break;
-                }
-                matrix[i][j] = Math.exp(prediction[i * 32 + j]);
-                sum += matrix[i][j];
-            }
-            for (int j = 0; j < 29; ++j) {
-                matrix[i][j] /= sum;
-            }
-            if (i * 32 > prediction.length) {
-                break;
-            }
-        }
-
-        // Do BeamSearch
-        return WordBeamSearch.search(matrix, 25, languageModel);
+        return  new Pair<>(stackedOutputs, new Pair<>(fullMFCC, audioLength));
     }
 }

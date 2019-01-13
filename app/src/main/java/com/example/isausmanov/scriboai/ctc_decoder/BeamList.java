@@ -27,16 +27,30 @@ public class BeamList {
 
         bestBeams.sort(Comparator.comparingDouble(o -> -(o.prBlank + o.prNonBlank) * o.prTotal));
 
-        return bestBeams.subList(0, Math.min(num, bestBeams.size()));
-    }
-
-    public void deletePartialBeams(LanguageModel languageModel) {
-        for (Map.Entry<String, Beam> entry : this.beams.entrySet()) {
-            String lastWord = entry.getValue().wordDev;
-            if (!lastWord.equals("") && !languageModel.isWord(lastWord)) {
-                this.beams.remove(lastWord);
-            }
+        List<Beam> result = bestBeams.subList(0, Math.min(num, bestBeams.size()));
+        int maxPowTotal = 0;
+        for (Beam beam : result) {
+            maxPowTotal = Math.max(maxPowTotal, -(int)(Math.log10(beam.prBlank)));
+            maxPowTotal = Math.max(maxPowTotal, -(int)(Math.log10(beam.prNonBlank)));
+            maxPowTotal = Math.max(maxPowTotal, -(int)(Math.log10(beam.prUnnormalized)));
         }
+        int canDo = 1;
+        int maxPowPr = 0;
+        for (Beam beam : result) {
+            if (beam.prBlank >= 0.1 || beam.prNonBlank >= 0.1) {
+                canDo = 0;
+                break;
+            }
+            maxPowPr = Math.max(maxPowPr, -(int)(Math.log10(beam.prUnnormalized)) - 2);
+        }
+        for (Beam beam : result) {
+            if (canDo == 1) {
+                beam.prBlank *= 10;
+                beam.prNonBlank *= 10;
+            }
+            beam.prUnnormalized *= Math.pow(10, maxPowPr);
+        }
+        return result;
     }
 
     public void completeBeams(LanguageModel languageModel) {

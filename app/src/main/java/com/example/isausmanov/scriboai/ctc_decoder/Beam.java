@@ -2,10 +2,14 @@ package com.example.isausmanov.scriboai.ctc_decoder;
 
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class Beam {
+    // Time
+    public ArrayList<Integer> time;
 
     // Optical score
     public double prBlank;
@@ -20,8 +24,6 @@ public class Beam {
 
     public LanguageModel languageModel;
 
-    public boolean useNGrams;
-
     public Beam(LanguageModel languageModel) {
         this.prBlank = 1;
         this.prNonBlank = 0;
@@ -33,6 +35,8 @@ public class Beam {
         this.prTotal = 1.0;
 
         this.languageModel = languageModel;
+
+        this.time = new ArrayList<>();
     }
 
     public boolean mergeBeam(Beam beam) {
@@ -50,7 +54,7 @@ public class Beam {
         return this.languageModel.getNextChars(this.wordDev);
     }
 
-    public Beam createChildBeam(Character newChar, double prBlank, double prNonBlank) {
+    public Beam createChildBeam(Character newChar, double prBlank, double prNonBlank, int time) {
         Beam beam = new Beam(this.languageModel);
 
         beam.text = this.text;
@@ -62,7 +66,13 @@ public class Beam {
         beam.prBlank = prBlank;
         beam.prNonBlank = prNonBlank;
 
+        beam.time = new ArrayList<>(this.time);
+
         if (newChar != null) {
+            if (!beam.languageModel.nonWordChars.contains(newChar) && beam.wordDev.equals("")) {
+                beam.time.add(time);
+            }
+
             beam.text = beam.text + newChar;
 
             if (beam.languageModel.ngram_usage != LanguageModel.NGRAM_NONE) {
@@ -112,7 +122,23 @@ public class Beam {
                 }
             }
         }
+
         return beam;
+    }
+
+    public void completeBeam(LanguageModel languageModel) {
+        String lastPrefix = this.wordDev;
+        if (lastPrefix.equals("") || languageModel.isWord(lastPrefix)) {
+            return;
+        }
+
+        Log.d("Coolest", lastPrefix);
+
+        // TODO: this is bullshit, he just selects first word. Need to at least use unigrams
+        List<String> words = languageModel.getNextWords(lastPrefix);
+
+        String word = words.get(0);
+        this.text = this.text + word.substring(lastPrefix.length());
     }
 
     public String toString() {

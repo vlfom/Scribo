@@ -208,16 +208,31 @@ Java_com_example_isausmanov_scriboai_model_ModelManager_runModelSync(JNIEnv *env
     struct timeval tpstart, tpend;
     gettimeofday(&tpstart, NULL);
 
-    //Todo: modify runModel parameter
-    int ret = HIAI_ModelManager_runModel(
-            modelManager,
-            inputtensorbuffer,
-            2,
-            outputtensorbuffer,
-            1,
-            15360,
-            modelName);
-
+    int ret;
+    int outputSize;
+    if (!strcmp(modelName, "Speakerchangedetection")) {
+        ret = HIAI_ModelManager_runModel(
+                modelManager,
+                inputtensorbuffer,
+                2,
+                outputtensorbuffer,
+                1,
+                32,
+                modelName);
+        outputSize = 32;
+    }
+    else {
+        LOGI("Well we're here so wtf:%s", modelName);
+        ret = HIAI_ModelManager_runModel(
+                modelManager,
+                inputtensorbuffer,
+                2,
+                outputtensorbuffer,
+                1,
+                15360,
+                modelName);
+        outputSize = 15360;
+    }
 
     if(ret != NO_ERROR){
         LOGE("run model ret: %d", ret);
@@ -230,9 +245,6 @@ Java_com_example_isausmanov_scriboai_model_ModelManager_runModelSync(JNIEnv *env
     time_use = 1000000 * (tpend.tv_sec - tpstart.tv_sec) + tpend.tv_usec - tpstart.tv_usec;
 
     LOGI("infrence time %f ms.", time_use / 1000);
-
-    //Todo: Modify to your own data(category)
-    int outputSize = 15360;
 
     float *outputBuffer = (float *) HIAI_TensorBuffer_getRawBuffer(outputtensor);
 
