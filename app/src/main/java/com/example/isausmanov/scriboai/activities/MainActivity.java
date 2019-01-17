@@ -30,9 +30,11 @@ import com.example.isausmanov.scriboai.RecordingDataModel;
 import com.example.isausmanov.scriboai.ScreenUtils;
 import com.example.isausmanov.scriboai.VoiceView;
 import com.example.isausmanov.scriboai.WavRecorder;
+import com.example.isausmanov.scriboai.ctc_decoder.LanguageModel;
 import com.example.isausmanov.scriboai.database.AppDatabase;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements VoiceView.OnIClickedListener {
@@ -40,15 +42,16 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     // Constant values
     private static final int RECORD_AUDIO_REQUEST_CODE = 123;
 
+    public static LanguageModel languageModel;
+
     //VoiceView Stuff
     private VoiceView mVoiceView;
-    private MediaRecorder mMediaRecorder;
     private Handler mHandler;
 
     private boolean mIsRecording = false;
 
     // UI elements declaration
-    public Button recBtn, toListBtn, doneBtn;
+    public Button toListBtn, doneBtn;
     public Chronometer chronometer;
     public AlertDialog.Builder builder;
     public EditText input;
@@ -66,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initializeLM();
         // Check the permissions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getPermissionToRecordAudio();
@@ -316,11 +320,6 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
 
                 float radius = (float) scale(amplit, 1, 6500, 50, 520);
                 mVoiceView.animateRadius(radius);
-                //Log.d("RADIUS", "radius value: " + radius);
-                Log.d("RADIUS", " radius original " + amplit);
-                //Log.d("RADIUS", "power radius: " + Math.pow(radius, 4) * ScreenUtils.dp2px(MainActivity.this, 20));
-                Log.d("RADIUS", "radius 380: " + radius);
-                //Log.d("RADIUS", "Utils: " + ScreenUtils.dp2px(MainActivity.this, 20));
                 if (mIsRecording) {
                     mHandler.postDelayed(this, 50);
                 }
@@ -337,6 +336,28 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     public void onAnimationFinish() {
         Log.d(TAG_Voice, "onRecordFinish");
         mIsRecording = false;
+    }
+
+    private void initializeLM() {
+        // Read file from assets
+        FileInputStream iStreamCorpus;
+        FileInputStream iStreamPostag;
+        try {
+            iStreamCorpus = getApplicationContext().getAssets().openFd("data_10kwords_1mlines_postag.txt").createInputStream();
+            iStreamPostag = getApplicationContext().getAssets().openFd("postag_dot_data.txt").createInputStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        Log.d("CoolModel", "Working!");
+        languageModel = new LanguageModel(
+                iStreamCorpus,
+                iStreamPostag,
+                "' abcdefghijklmnopqrstuvwxyz",
+                "abcdefghijklmnopqrstuvwxyz",
+                LanguageModel.NGRAM_BIGRAM
+        );
     }
 
     // Permission request

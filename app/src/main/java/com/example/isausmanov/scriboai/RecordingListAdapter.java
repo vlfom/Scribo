@@ -102,6 +102,8 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
                             progressStatus = doSomeWork();
                             handler.post(new Runnable() {
                                 public void run() {
+
+
                                     viewHolder.progressBar.setProgress(progressStatus);
                                 }
                             });

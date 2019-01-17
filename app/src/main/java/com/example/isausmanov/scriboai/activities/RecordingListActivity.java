@@ -49,14 +49,15 @@ public class RecordingListActivity extends AppCompatActivity {
     private ListView listView;
     private RecordingListAdapter adapter;
     private AppDatabase db;
+    private RecordingDataModel dataModel;
 
-    private static LanguageModel languageModel;
-
+    private LanguageModel l_languageModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recording_list);
+        l_languageModel = MainActivity.languageModel;
 
         listView = findViewById(R.id.recording_list);
         dataModels = new ArrayList<>();
@@ -64,155 +65,188 @@ public class RecordingListActivity extends AppCompatActivity {
         fetchRecordings();
 
         listView.setOnItemClickListener((parent, view, position, id) -> {
-            RecordingDataModel dataModel = dataModels.get(position);
+            dataModel = dataModels.get(position);
 
-            Pair<float[], Pair<double[][], Double>> transcriptionData = getTranscriptionProbabilities(dataModel.getUri());
-            double[][] fullMFCC = transcriptionData.second.first;
-            double audioDuration = transcriptionData.second.second;
+            ArrayList<String> transcriptionWords = null;
+            ArrayList<Integer> transcriptionWordTimes = null;
+            ArrayList<Integer> speakerChanged = null;
 
-            Pair<String, ArrayList> res = decodeCTCMatrix(transcriptionData.first);
+            db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "production")
+                    .allowMainThreadQueries()
+                    .build();
 
-            ArrayList<Integer> transcriptionWordTimes = res.second;
-            for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
-                if (transcriptionWordTimes.get(i) * 2 * 255.8 / 16 >= audioDuration * 1000) {
-                    transcriptionWordTimes = new ArrayList<>(transcriptionWordTimes.subList(0, i));
-                    break;
-                }
-                transcriptionWordTimes.set(i, (int)(transcriptionWordTimes.get(i) * 2 * 255.8 / 16));
-            }
+            int rec_id = dataModel.getId();
+            boolean rec_transcribed = dataModel.getTranscribed();
 
-            ArrayList<String> transcriptionWords = new ArrayList<>();
-            String[] wordCandidates = res.first.split(" ");
-            for (String wordCandidate : wordCandidates) {
-                if (wordCandidate.equals("")){
-                    continue;
-                }
-                transcriptionWords.add(wordCandidate);
+            if (rec_transcribed == true){
+                // if the recording is transcribed already, do...
 
-                if (transcriptionWords.size() == transcriptionWordTimes.size()) {
-                    break;
-                }
-            }
+                //Log.d("DB_TEST", dataModel.getTranscription_words().get(5) + "  " + dataModel.getTranscription_word_times().get(5).toString());
+                Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
+                i.putExtra("AUDIO_URI", dataModel.getUri());
+                i.putExtra("AUDIO_TRANSCRIPTION", dataModel.getTranscription_words());
+                i.putExtra("AUDIO_WORD_TIMES", dataModel.getTranscription_word_times());
+                i.putExtra("AUDIO_SPEAKER_CHANGED", dataModel.getTranscription_speaker());
+                startActivity(i);
+            }else {
+                // if recording has no transcription, do...
 
-            for (int i = 0; i < fullMFCC.length; ++i) {
-                double max = Double.MIN_VALUE;
-                for (int j = 0; j < 16; ++j) {
-                    max = Math.max(max, fullMFCC[i][j]);
-                }
-                for (int j = 0; j < 16; ++j) {
-                    fullMFCC[i][j] = fullMFCC[i][j] / max;
-                }
-            }
+                Pair<float[], Pair<double[][], Double>> transcriptionData = getTranscriptionProbabilities(dataModel.getUri());
+                double[][] fullMFCC = transcriptionData.second.first;
+                double audioDuration = transcriptionData.second.second;
 
-            double mfcc_mean = 0;
-            double mfcc_std = 0;
-            for (int i = 0; i < fullMFCC.length; ++i) {
-                for (int j = 0; j < 16; ++j) {
-                    mfcc_mean += fullMFCC[i][j];
-                }
-            }
+                Pair<String, ArrayList> res = decodeCTCMatrix(transcriptionData.first);
 
-            mfcc_mean /= fullMFCC.length * 16;
-
-            for (int i = 0; i < fullMFCC.length; ++i) {
-                for (int j = 0; j < 16; ++j) {
-                    mfcc_std += Math.pow(fullMFCC[i][j] - mfcc_mean, 2);
-                }
-            }
-
-            mfcc_std = Math.sqrt(mfcc_std / (fullMFCC.length * 16));
-
-            for (int i = 0; i < fullMFCC.length; ++i) {
-                for (int j = 0; j < 16; ++j) {
-                    fullMFCC[i][j] = (fullMFCC[i][j] - mfcc_mean) / mfcc_std;
-                }
-            }
-
-            ArrayList<Integer> speakerChanged = new ArrayList<>(
-                    Collections.nCopies(transcriptionWords.size(), 0)
-            );
-            int wordToBegin = Integer.MAX_VALUE, wordToEnd = -1;
-            for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
-                int frameNum = (int)(transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
-
-                if (frameNum - 1 >= 224 && wordToBegin == Integer.MAX_VALUE) {
-                    wordToBegin = i;
+                transcriptionWordTimes = res.second;
+                for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
+                    if (transcriptionWordTimes.get(i) * 2 * 255.8 / 16 >= audioDuration * 1000) {
+                        transcriptionWordTimes = new ArrayList<>(transcriptionWordTimes.subList(0, i));
+                        break;
+                    }
+                    transcriptionWordTimes.set(i, (int)(transcriptionWordTimes.get(i) * 2 * 255.8 / 16));
                 }
 
-                if (fullMFCC.length - frameNum >= 224) {
-                    wordToEnd = i;
-                }
-            }
+                transcriptionWords = new ArrayList<>();
+                String[] wordCandidates = res.first.split(" ");
+                for (String wordCandidate : wordCandidates) {
+                    if (wordCandidate.equals("")){
+                        continue;
+                    }
+                    transcriptionWords.add(wordCandidate);
 
-            double[] differences = new double[Math.max(0, wordToEnd - wordToBegin + 1)];
-            SpeakerchangedetectionModel.load(getAssets());
-            for (int i = wordToBegin; i <= wordToEnd; ++i) {
-                int middleFrame = (int) (transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
-                differences[i - wordToBegin] = detectSpeakerChange(
-                        fullMFCC,
-                        middleFrame - 1 - 224, middleFrame - 1,
-                        middleFrame, middleFrame + 224
+                    if (transcriptionWords.size() == transcriptionWordTimes.size()) {
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < fullMFCC.length; ++i) {
+                    double max = Double.MIN_VALUE;
+                    for (int j = 0; j < 16; ++j) {
+                        max = Math.max(max, fullMFCC[i][j]);
+                    }
+                    for (int j = 0; j < 16; ++j) {
+                        fullMFCC[i][j] = fullMFCC[i][j] / max;
+                    }
+                }
+
+                double mfcc_mean = 0;
+                double mfcc_std = 0;
+                for (int i = 0; i < fullMFCC.length; ++i) {
+                    for (int j = 0; j < 16; ++j) {
+                        mfcc_mean += fullMFCC[i][j];
+                    }
+                }
+
+                mfcc_mean /= fullMFCC.length * 16;
+
+                for (int i = 0; i < fullMFCC.length; ++i) {
+                    for (int j = 0; j < 16; ++j) {
+                        mfcc_std += Math.pow(fullMFCC[i][j] - mfcc_mean, 2);
+                    }
+                }
+
+                mfcc_std = Math.sqrt(mfcc_std / (fullMFCC.length * 16));
+
+                for (int i = 0; i < fullMFCC.length; ++i) {
+                    for (int j = 0; j < 16; ++j) {
+                        fullMFCC[i][j] = (fullMFCC[i][j] - mfcc_mean) / mfcc_std;
+                    }
+                }
+
+                speakerChanged = new ArrayList<>(
+                        Collections.nCopies(transcriptionWords.size(), 0)
                 );
-            }
-            SpeakerchangedetectionModel.unload();
+                int wordToBegin = Integer.MAX_VALUE, wordToEnd = -1;
+                for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
+                    int frameNum = (int)(transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
 
-            double maxDifference = Double.MIN_VALUE;
-            for (double difference : differences) {
-                maxDifference = Math.max(maxDifference, difference);
-            }
-            for (int i = 0; i < differences.length; ++i) {
-                differences[i] /= maxDifference;
-                if (differences[i] >= 5) {
-                    speakerChanged.set(i + wordToBegin, 1);
+                    if (frameNum - 1 >= 224 && wordToBegin == Integer.MAX_VALUE) {
+                        wordToBegin = i;
+                    }
+
+                    if (fullMFCC.length - frameNum >= 224) {
+                        wordToEnd = i;
+                    }
                 }
-            }
-            Log.d("Coolest", Arrays.toString(new ArrayList[]{transcriptionWords}));
 
-            // Add dots
-            int[] needDotAfter = new int[transcriptionWords.size()];
-            for (int i = 5; i < transcriptionWords.size(); ++i) {
-                long hash = 0;
-                for (int j = i-5; j <= i; ++j) {
-//                    Log.d("Coolest", String.valueOf(languageModel));
-//                    Log.d("Coolest", String.valueOf(languageModel.wordToPostag));
+                double[] differences = new double[Math.max(0, wordToEnd - wordToBegin + 1)];
+                SpeakerchangedetectionModel.load(getAssets());
+                for (int i = wordToBegin; i <= wordToEnd; ++i) {
+                    int middleFrame = (int) (transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
+                    differences[i - wordToBegin] = detectSpeakerChange(
+                            fullMFCC,
+                            middleFrame - 1 - 224, middleFrame - 1,
+                            middleFrame, middleFrame + 224
+                    );
+                }
+                SpeakerchangedetectionModel.unload();
+
+                double maxDifference = Double.MIN_VALUE;
+                for (double difference : differences) {
+                    maxDifference = Math.max(maxDifference, difference);
+                }
+                for (int i = 0; i < differences.length; ++i) {
+                    differences[i] /= maxDifference;
+                    if (differences[i] >= 5) {
+                        speakerChanged.set(i + wordToBegin, 1);
+                    }
+                }
+                Log.d("Coolest", Arrays.toString(new ArrayList[]{transcriptionWords}));
+
+                // Add dots
+                int[] needDotAfter = new int[transcriptionWords.size()];
+                for (int i = 5; i < transcriptionWords.size(); ++i) {
+                    long hash = 0;
+                    for (int j = i-5; j <= i; ++j) {
+//                    Log.d("Coolest", String.valueOf(l_languageModel));
+//                    Log.d("Coolest", String.valueOf(l_languageModel.wordToPostag));
 //                    Log.d("Coolest", transcriptionWords.get(j));
-                    hash = hash * 35 + languageModel.wordToPostag.get(transcriptionWords.get(j));
+                        hash = hash * 35 + l_languageModel.wordToPostag.get(transcriptionWords.get(j));
+                    }
+                    Log.d("Coolest", String.valueOf(hash));
+                    if (l_languageModel.posTagSequenceDotHash.contains(hash)) {
+                        needDotAfter[i - 3] = 1;
+                    }
                 }
-                Log.d("Coolest", String.valueOf(hash));
-                if (languageModel.posTagSequenceDotHash.contains(hash)) {
-                    needDotAfter[i - 3] = 1;
+                Log.d("Coolest", String.valueOf(l_languageModel.posTagSequenceDotHash.contains(1385650630L)));
+
+                // Capitalize 1st word
+                transcriptionWords.set(0,
+                        transcriptionWords.get(0).substring(0, 1).toUpperCase() + transcriptionWords.get(0).substring(1));
+
+                for (int i = 0; i < transcriptionWords.size(); ++i) {
+                    if (needDotAfter[i] == 1) {
+                        transcriptionWords.set(i, transcriptionWords.get(i) + ".");
+                        transcriptionWords.set(i + 1,
+                                transcriptionWords.get(i + 1).substring(0, 1).toUpperCase() + transcriptionWords.get(i + 1).substring(1));
+                    }
                 }
+
+                // Add dot in the end
+                transcriptionWords.set(transcriptionWords.size() - 1,
+                        transcriptionWords.get(transcriptionWords.size() - 1) + ".");
+
+                Log.d("Coolest", Arrays.toString(differences));
+                Log.d("Coolest", Arrays.toString(new ArrayList[]{speakerChanged}));
+
+                // Update the recording in the DB
+                db.recordingDao().update(true, transcriptionWords, transcriptionWordTimes, speakerChanged, rec_id);
+                db.close();
+
+                dataModel.setTranscription_word_times(transcriptionWordTimes);
+                dataModel.setTranscribed(true);
+                dataModel.setTranscription_words(transcriptionWords);
+                dataModel.setTranscription_speaker(speakerChanged);
+
+                Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
+                i.putExtra("AUDIO_URI", dataModel.getUri());
+                i.putExtra("AUDIO_TRANSCRIPTION", transcriptionWords);
+                i.putExtra("AUDIO_WORD_TIMES", transcriptionWordTimes);
+                i.putExtra("AUDIO_SPEAKER_CHANGED", speakerChanged);
+                startActivity(i);
             }
-            Log.d("Coolest", String.valueOf(languageModel.posTagSequenceDotHash.contains(1385650630L)));
 
-            // Capitalize 1st word
-            transcriptionWords.set(0,
-                    transcriptionWords.get(0).substring(0, 1).toUpperCase() + transcriptionWords.get(0).substring(1));
-
-            for (int i = 0; i < transcriptionWords.size(); ++i) {
-                if (needDotAfter[i] == 1) {
-                    transcriptionWords.set(i, transcriptionWords.get(i) + ".");
-                    transcriptionWords.set(i + 1,
-                            transcriptionWords.get(i + 1).substring(0, 1).toUpperCase() + transcriptionWords.get(i + 1).substring(1));
-                }
-            }
-
-            // Add dot in the end
-            transcriptionWords.set(transcriptionWords.size() - 1,
-                    transcriptionWords.get(transcriptionWords.size() - 1) + ".");
-
-            Log.d("Coolest", Arrays.toString(differences));
-            Log.d("Coolest", Arrays.toString(new ArrayList[]{speakerChanged}));
-
-            Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
-            i.putExtra("AUDIO_URI", dataModel.getUri());
-            i.putExtra("AUDIO_TRANSCRIPTION", transcriptionWords);
-            i.putExtra("AUDIO_WORD_TIMES", transcriptionWordTimes);
-            i.putExtra("AUDIO_SPEAKER_CHANGED", speakerChanged);
-            startActivity(i);
         });
-
-        initializeLM();
 
         setAdaptertoRecyclerView();
     }
@@ -244,36 +278,8 @@ public class RecordingListActivity extends AppCompatActivity {
         return similarity;
     }
 
-    private void initializeLM() {
-        // Read file from assets
-        FileInputStream iStreamCorpus;
-        FileInputStream iStreamPostag;
-        try {
-            iStreamCorpus = getApplicationContext().getAssets().openFd("data_10kwords_1mlines_postag.txt").createInputStream();
-            iStreamPostag = getApplicationContext().getAssets().openFd("postag_dot_data.txt").createInputStream();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        Log.d("CoolModel", "Working!");
-        languageModel = new LanguageModel(
-                iStreamCorpus,
-                iStreamPostag,
-                "' abcdefghijklmnopqrstuvwxyz",
-                "abcdefghijklmnopqrstuvwxyz",
-                LanguageModel.NGRAM_BIGRAM
-        );
-    }
 
     private void fetchRecordings() {
-        /*
-        new Thread(new Runnable() {
-            public void run() {
-
-            }
-        }).start();
-        */
 
         // TODO: MUST PUT THIS INTO A SEPARATE THREAD! For a time being on a main thread.
         db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "production")
@@ -326,7 +332,7 @@ public class RecordingListActivity extends AppCompatActivity {
         }
 
         // Do BeamSearch
-        return WordBeamSearch.search(matrix, 50, languageModel);
+        return WordBeamSearch.search(matrix, 50, l_languageModel);
     }
 
     private Pair<float[], Pair<double[][], Double>> getTranscriptionProbabilities(String fileURI) {
