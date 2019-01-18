@@ -1,5 +1,6 @@
 package com.example.isausmanov.scriboai.activities;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -42,10 +43,12 @@ public class RecordingDetailsActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Handler threadHandler = new Handler();
     private MediaPlayer mediaPlayer;
+    private Button buttonShare;
 
     private ArrayList<String> transcriptionWords;
     private ArrayList<Integer> transcriptionTimes;
     private ArrayList<Integer> transcriptionSpeakerChanged;
+    private String audioName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,12 +67,13 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         this.buttonPlay = findViewById(R.id.recording_details_play_button);
         this.buttonPause = findViewById(R.id.recording_details_pause_button);
         this.buttonPause.setEnabled(false);
+        this.buttonShare = findViewById(R.id.share_btn);
 
         this.seekBar = this.findViewById(R.id.recording_details_seek_bar);
         this.seekBar.setOnSeekBarChangeListener(new MySeekBarChangeListener());
 
         // ID of template song
-        int songId = this.getRawResIdByName("template_song");
+       // int songId = this.getRawResIdByName("template_song");
 
         // Create MediaPlayer.
         //this.mediaPlayer = MediaPlayer.create(this, songId);
@@ -87,7 +91,30 @@ public class RecordingDetailsActivity extends AppCompatActivity {
 
         this.transcriptionWords = (ArrayList<String>) getIntent().getSerializableExtra("AUDIO_TRANSCRIPTION");
 
+        this.audioName = (String) getIntent().getSerializableExtra("AUDIO_NAME");
+
         setTranscriptionContent(this.transcriptionWords, null);
+
+        buttonShare.setOnClickListener(v -> {
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("message/rfc822");
+            i.putExtra(Intent.EXTRA_EMAIL  , new String[]{""});
+            i.putExtra(Intent.EXTRA_SUBJECT, audioName);
+            i.putExtra(Intent.EXTRA_TEXT   , getPureText(transcriptionWords));
+            try {
+                startActivity(Intent.createChooser(i, "Send mail..."));
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(RecordingDetailsActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
+    // ["makes", "this"] => "makes this"
+    private String getPureText(ArrayList<String> transcriptionWords) {
+        String transcriptionText = "";
+        for(int i = 0; i < transcriptionWords.size(); i++) transcriptionText = transcriptionText + transcriptionWords.get(i) + " ";
+        return transcriptionText;
     }
 
     private void setTranscriptionContent(List<String> words, Integer index) {
