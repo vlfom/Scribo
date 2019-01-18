@@ -23,6 +23,7 @@
         android:layout_centerInParent="true"
         android:layout_marginStart="47dp"
         android:layout_marginTop="15dp"
+        android:layout_marginBottom="5dp"
 
         android:paddingBottom="10dp"
         android:orientation="vertical"
@@ -37,7 +38,7 @@
             android:text="Recording 1"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="#636363"
-            android:textSize="17sp"/>
+            android:textSize="14sp"/>
 
         <LinearLayout
             android:layout_width="match_parent"

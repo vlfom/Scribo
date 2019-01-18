@@ -2,6 +2,7 @@ package com.example.isausmanov.scriboai.activities;
 
 import android.Manifest;
 import android.arch.persistence.room.Room;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.EditText;
@@ -36,6 +38,10 @@ import com.example.isausmanov.scriboai.database.AppDatabase;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements VoiceView.OnIClickedListener {
 
@@ -69,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initializeLM();
+
         // Check the permissions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getPermissionToRecordAudio();
@@ -83,38 +89,34 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
         mHandler = new Handler(Looper.getMainLooper());
 
         // Go to list activity when clicked
-        toListBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, RecordingListActivity.class);
-                startActivity(i);
+        toListBtn.setOnClickListener(v -> {
+            Intent i = new Intent(MainActivity.this, RecordingListActivity.class);
+            startActivity(i);
 
-                /* For sharing
-                Intent i = new Intent(Intent.ACTION_SEND);
-                i.setType("message/rfc822");
-                i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"isa.usmanov@tum.de"});
-                i.putExtra(Intent.EXTRA_SUBJECT, "EMAIL FROM SCRIBO");
-                i.putExtra(Intent.EXTRA_TEXT   , "Text text text text text");
-                try {
-                    startActivity(Intent.createChooser(i, "Send mail..."));
-                } catch (android.content.ActivityNotFoundException ex) {
-                    Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-                }
-                */
+            /* For sharing
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("message/rfc822");
+            i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"isa.usmanov@tum.de"});
+            i.putExtra(Intent.EXTRA_SUBJECT, "EMAIL FROM SCRIBO");
+            i.putExtra(Intent.EXTRA_TEXT   , "Text text text text text");
+            try {
+                startActivity(Intent.createChooser(i, "Send mail..."));
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
             }
+            */
         });
 
         // Done button clicked. Show a pop-up to save the recording.
-        doneBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                prepareUIforStop();
-                showAlert();
-                stopRecording();
-                recordFlag = 0;
-            }
+        doneBtn.setOnClickListener(v -> {
+            prepareUIforStop();
+            showAlert();
+            stopRecording();
+            recordFlag = 0;
         });
 
+        // Initialize LanguageModel for SpeechRecognition model in background
+        new Thread(this::initializeLM).start();
     }
 
     private void prepareUIforRecording() {
@@ -197,10 +199,11 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     private void initViews() {
         // Initialize UI elements
         chronometer = findViewById(R.id.chronometerTimer);
-        //recBtn = findViewById(R.id.rec_btn);
+
         toListBtn = findViewById(R.id.list_btn);
         doneBtn = findViewById(R.id.done_btn);
         doneBtn.setEnabled(false);
+
         builder = new AlertDialog.Builder(MainActivity.this);
     }
 
@@ -222,35 +225,39 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     }
 
     private void showAlert(){
-
-        builder.setTitle("Name your recording");
+        builder.setTitle("Save recording");
 
         // Set up the input
         input = new EditText(MainActivity.this);
+        input.setSelected(true);
+        input.setSelectAllOnFocus(true);
+        SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss dd.MM.yy");
+        input.setText("Recording " + df.format(new Date()));
+        input.selectAll();
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
+        builder.setView(input, 60, 0, 60, 0);
 
         // Set up the buttons
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                saveRecording(input.getText().toString());
-                Toast.makeText(MainActivity.this, "Recording saved successfully.", Toast.LENGTH_SHORT).show();
-            }
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            saveRecording(input.getText().toString());
+            Toast.makeText(MainActivity.this, "Successfully saved.", Toast.LENGTH_SHORT).show();
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-                Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
-            }
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            dialog.cancel();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+            Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
         });
+
         builder.show();
+
+        input.requestFocus();
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
     }
 
     private void saveRecording(String rec_name) {
-
         Log.d(TAG_DB, fileName);
         Log.d(TAG_DB, "total rec duration: " + totalRecDuration);
 
