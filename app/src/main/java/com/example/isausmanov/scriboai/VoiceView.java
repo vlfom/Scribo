@@ -76,7 +76,7 @@ public class VoiceView extends View {
 
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
-        mPaint.setColor(Color.argb(255, 19, 165, 255));
+        mPaint.setColor(Color.argb(255, 183, 28, 28));
 
         mMinRadius = ScreenUtils.dp2px(getContext(), 68) / 2;
         mCurrentRadius = mMinRadius;

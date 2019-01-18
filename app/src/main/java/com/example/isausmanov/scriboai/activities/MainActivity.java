@@ -258,15 +258,17 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
         builder.setPositiveButton("Save", (dialog, which) -> {
             saveRecording(input.getText().toString());
             Toast.makeText(MainActivity.this, "Successfully saved.", Toast.LENGTH_SHORT).show();
+
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
-            Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> {
             dialog.cancel();
+
+            Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
+
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
-            Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
         });
 
         builder.show();

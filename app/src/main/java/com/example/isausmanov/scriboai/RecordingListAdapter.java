@@ -125,13 +125,18 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
                             updateSpeed /= 2;
                         }
 
-                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.8
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.7
                                 && updateSpeed > maxSpeed / 3) {
                             updateSpeed /= 2;
                         }
 
-                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.9
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.8
                                 && updateSpeed > maxSpeed / 6) {
+                            updateSpeed /= 2;
+                        }
+
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.9
+                                && updateSpeed > maxSpeed / 10) {
                             updateSpeed /= 2;
                         }
 

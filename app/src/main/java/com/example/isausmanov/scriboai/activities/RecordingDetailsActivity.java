@@ -1,5 +1,7 @@
 package com.example.isausmanov.scriboai.activities;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -47,6 +49,8 @@ public class RecordingDetailsActivity extends AppCompatActivity {
     private ArrayList<Integer> transcriptionTimes;
     private ArrayList<Integer> transcriptionSpeakerChanged;
 
+    private int highlightedWord = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,8 +72,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         this.seekBar = this.findViewById(R.id.recording_details_seek_bar);
         this.seekBar.setOnSeekBarChangeListener(new MySeekBarChangeListener());
 
-        // ID of template song
-        int songId = this.getRawResIdByName("template_song");
+        this.textTranscription.getSettings().setJavaScriptEnabled(true);
 
         // Create MediaPlayer.
         //this.mediaPlayer = MediaPlayer.create(this, songId);
@@ -79,6 +82,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         this.mediaPlayer.setOnCompletionListener(mp -> {
             this.buttonPlay.setEnabled(true);
             this.buttonPause.setEnabled(false);
+            this.setTranscriptionContent(-1);
         });
 
         this.transcriptionTimes = (ArrayList<Integer>) getIntent().getSerializableExtra("AUDIO_WORD_TIMES");
@@ -87,78 +91,37 @@ public class RecordingDetailsActivity extends AppCompatActivity {
 
         this.transcriptionWords = (ArrayList<String>) getIntent().getSerializableExtra("AUDIO_TRANSCRIPTION");
 
-        setTranscriptionContent(this.transcriptionWords, null);
+        setTranscriptionContent(this.transcriptionWords);
     }
 
-    private void setTranscriptionContent(List<String> words, Integer index) {
+    private void setTranscriptionContent(List<String> words) {
         StringBuilder text = new StringBuilder();
         String header = "<html>\n" +
                 "<head></head>\n" +
-                "<body style=\"text-align:justify;color:rgb(100, 100, 100);font-size:16px;background:transparent;\">\n";
+                "<body style=\"text-align:justify;color:rgb(100, 100, 100);font-size:20px;background:transparent;\">\n";
         String footer = "</body>\n" +
                 "</html>";
 
         text.append(header);
 
+        Log.d("Coolest", String.valueOf(transcriptionSpeakerChanged));
+
         String word;
-        if (index == null) {
-            for (int i = 0; i < words.size(); ++i) {
-                if (transcriptionSpeakerChanged.get(i) == 1) {
-                    text.append("<br>Speaker<br>");
-                }
-                word = words.get(i);
-                if (i > 0 && !word.equals(".")) {
-                    text.append(" ");
-                }
-                text.append(word);
-            }
-        }
-        else {
-            for (int i = 0; i < index; ++i) {
-                if (transcriptionSpeakerChanged.get(i) == 1) {
-                    text.append("<br>Speaker<br>");
-                }
-                word = words.get(i);
-                if (i > 0 && !word.equals(".")) {
-                    text.append(" ");
-                }
-                text.append(word);
-            }
-            if (transcriptionSpeakerChanged.get(index) == 1) {
+        for (int i = 0; i < words.size(); ++i) {
+            if (transcriptionSpeakerChanged.get(i) == 1) {
                 text.append("<br>Speaker<br>");
             }
-            text.append("<span style=\"background-color: #ddebff;\">");
-            word = words.get(index);
-            if (word.equals(".")) {
-                text.append(".");
+            word = words.get(i);
+            if (i > 0 && !word.equals(".")) {
+                text.append("<span class=\"word").append(i).append(" word").append(i - 1)
+                        .append("\">")
+                        .append(" ")
+                        .append("</span>");
             }
-            else {
-                if (index > 0) {
-                    text.append(" ");
-                }
-
-                text.append(word);
-
-                if (index + 1 < words.size() && words.get(index + 1).equals(".")) {
-                    text.append(".");
-                }
-                else {
-                    text.append(" ");
-                }
-            }
-            text.append("</span>");
-            for (int i = index + 1; i < words.size(); ++i) {
-                if (transcriptionSpeakerChanged.get(i) == 1) {
-                    text.append("<br>Speaker<br>");
-                }
-                word = words.get(i);
-                if (i > 0 && !word.equals(".") && i != index + 1) {
-                    text.append(" ");
-                }
-                if (!(i == index + 1 && word.equals("."))) {
-                    text.append(word);
-                }
-            }
+            text.append("<span class=\"word").append(i).append(" w").append(i)
+                    .append("\">")
+                    .append(word)
+                    .append("</span>");
         }
 
         text.append(footer);
@@ -166,10 +129,26 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         textTranscription.loadData(text.toString(), "text/html; charset=utf-8", "utf-8");
     }
 
-    // Find ID of resource in 'raw' folder.
-    public int getRawResIdByName(String resName) {
-        String pkgName = this.getPackageName();
-        return this.getResources().getIdentifier(resName, "raw", pkgName);
+    private void setTranscriptionContent(Integer index) {
+        if (highlightedWord >= 0) {
+            textTranscription.evaluateJavascript("document.querySelectorAll('.word" +
+                    highlightedWord +
+                    "').forEach(function(e){e.style.backgroundColor = 'transparent';});",
+                    null);
+            textTranscription.evaluateJavascript(
+                    "document.querySelectorAll('.w0')" +
+                            ".forEach(function(e){e.onclick = function(){e.style.backgroundColor = 'green';};});",
+                    null);
+        }
+
+        highlightedWord = index;
+
+        if (highlightedWord >= 0) {
+            textTranscription.evaluateJavascript("document.querySelectorAll('.word" +
+                            highlightedWord +
+                            "').forEach(function(e){e.style.backgroundColor = '#ffcdd2';});",
+                    null);
+        }
     }
 
     // Converts milliseconds to string
@@ -249,7 +228,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
                 previousIndex = index;
 
                 if (index == -1) {
-                    setTranscriptionContent(transcriptionWords, null);
+                    setTranscriptionContent(-1);
                 }
                 else {
                     if (index < 0) {
@@ -260,7 +239,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
                         index -= 1;
                     }
 
-                    setTranscriptionContent(transcriptionWords, index);
+                    setTranscriptionContent(index);
                 }
             }
 

@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import android.arch.persistence.room.Room;
+import android.widget.Toast;
 
 public class RecordingListActivity extends AppCompatActivity {
     // RecordsList data
@@ -284,15 +285,7 @@ public class RecordingListActivity extends AppCompatActivity {
                 startActivity(i);
             }else {
                 // if recording has no transcription, do...
-
-
-
-                Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
-                i.putExtra("AUDIO_URI", dataModel.getUri());
-                i.putExtra("AUDIO_TRANSCRIPTION", transcriptionWords);
-                i.putExtra("AUDIO_WORD_TIMES", transcriptionWordTimes);
-                i.putExtra("AUDIO_SPEAKER_CHANGED", speakerChanged);
-                startActivity(i);
+                Toast.makeText(getApplicationContext(), "Recording must be transcribed first", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -369,6 +362,8 @@ public class RecordingListActivity extends AppCompatActivity {
         speakerChanged = new ArrayList<>(
                 Collections.nCopies(transcriptionWords.size(), 0)
         );
+        speakerChanged.set(0, 1);
+
         int wordToBegin = Integer.MAX_VALUE, wordToEnd = -1;
         for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
             int frameNum = (int)(transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
@@ -431,8 +426,9 @@ public class RecordingListActivity extends AppCompatActivity {
         Log.d("Coolest", String.valueOf(languageModel.posTagSequenceDotHash.contains(1385650630L)));
 
         // Capitalize 1st word
-        transcriptionWords.set(0,
-                transcriptionWords.get(0).substring(0, 1).toUpperCase() + transcriptionWords.get(0).substring(1));
+        if (transcriptionWords.size() > 0)
+            transcriptionWords.set(0,
+                    transcriptionWords.get(0).substring(0, 1).toUpperCase() + transcriptionWords.get(0).substring(1));
 
         for (int i = 0; i < transcriptionWords.size(); ++i) {
             if (needDotAfter[i] == 1) {
@@ -443,8 +439,9 @@ public class RecordingListActivity extends AppCompatActivity {
         }
 
         // Add dot in the end
-        transcriptionWords.set(transcriptionWords.size() - 1,
-                transcriptionWords.get(transcriptionWords.size() - 1) + ".");
+        if (transcriptionWords.size() > 0)
+            transcriptionWords.set(transcriptionWords.size() - 1,
+                    transcriptionWords.get(transcriptionWords.size() - 1) + ".");
 
         Log.d("Coolest", Arrays.toString(differences));
         Log.d("Coolest", Arrays.toString(new ArrayList[]{speakerChanged}));
