@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="@color/colorWhite"
+    android:background="@drawable/bottom_border"
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
@@ -14,6 +14,7 @@
         android:layout_height="210dp"
         android:layout_centerInParent="true"
         android:layout_marginStart="60dp"
+        android:layout_marginBottom="1dp"
         android:background="#FFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -44,7 +45,6 @@
 
         android:text="Recordings"
         android:textSize="10dp"
-        android:fontFamily="monospace"
         android:textColor="@color/colorGray"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -61,7 +61,6 @@
         android:drawablePadding="5dp"
         android:text="Stop"
         android:textSize="10dp"
-        android:fontFamily="monospace"
         android:textColor="@color/colorGray"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

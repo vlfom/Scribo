@@ -76,7 +76,10 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         String songURI = getIntent().getStringExtra("AUDIO_URI");
         File songFile = new File(songURI);
         this.mediaPlayer = MediaPlayer.create(this, Uri.fromFile(songFile));
-
+        this.mediaPlayer.setOnCompletionListener(mp -> {
+            this.buttonPlay.setEnabled(true);
+            this.buttonPause.setEnabled(false);
+        });
 
         this.transcriptionTimes = (ArrayList<Integer>) getIntent().getSerializableExtra("AUDIO_WORD_TIMES");
 

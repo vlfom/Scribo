@@ -138,7 +138,7 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
     private void updateButton(ViewHolder v){
         v.progressBar.setVisibility(View.GONE);
         v.transcribe_btn.setVisibility(View.VISIBLE);
-        v.transcribe_btn.setText("FINISHED");
+        v.transcribe_btn.setText("PROCESSED");
         v.transcribe_btn.setBackgroundColor(ContextCompat.getColor(context, R.color.colorGray));
         v.transcribe_btn.setEnabled(false);
     }
