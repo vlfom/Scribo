@@ -18,8 +18,10 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="foregroundImage" value="C:\Users\vlfom\Downloads\icons8-pause-button-96.png" />
-                                      <entry key="outputName" value="ic_pause_button" />
+                                      <entry key="backgroundLayerName" value="ic_recording_background" />
+                                      <entry key="foregroundImage" value="C:\Users\vlfom\Downloads\voice-recorder.svg" />
+                                      <entry key="foregroundLayerName" value="ic_recording_foreground" />
+                                      <entry key="outputName" value="ic_recording_list" />
                                     </map>
                                   </option>
                                 </PersistentState>

@@ -9,11 +9,11 @@
 
     <ImageView
         android:id="@+id/list_item_image"
-        android:layout_marginTop="20dp"
-        android:layout_width="24dp"
-        android:layout_height="32dp"
-        android:layout_alignParentLeft="true"
-        android:src="@drawable/ic_mic" />
+        android:layout_marginTop="10dp"
+        android:layout_width="30dp"
+        android:layout_height="50dp"
+        android:layout_alignParentStart="true"
+        android:src="@drawable/ic_recording_mic" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -28,7 +28,6 @@
         android:paddingBottom="10dp"
         android:orientation="vertical"
         >
-        <!-- android:background="@drawable/recording_list_item_bg" -->
 
 
         <TextView
@@ -59,7 +58,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
                 android:text="00.00.12"
-                android:layout_marginLeft="7dp"
+                android:layout_marginStart="7dp"
                 android:textColor="@android:color/darker_gray" />
 
         </LinearLayout>
