@@ -1,10 +1,12 @@
 package com.example.isausmanov.scriboai;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +17,16 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.isausmanov.scriboai.activities.RecordingListActivity;
+
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> implements View.OnClickListener {
 
     private ArrayList<RecordingDataModel> data;
     Context context;
     int progressStatus = 1;
-    int progress = 1;
 
     // View lookup cache
     private static class ViewHolder {
@@ -93,32 +97,56 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
         }
         else {
             viewHolder.transcribe_btn.setOnClickListener(v -> {
+                RecordingListActivity recordingListActivity = (RecordingListActivity) parent.getContext();
+
                 viewHolder.progressBar.setVisibility(View.VISIBLE);
                 viewHolder.transcribe_btn.setVisibility(View.GONE);
 
-                new Thread(new Runnable() {
-                    public void run() {
-                        while (progressStatus < 100) {
-                            progressStatus = doSomeWork();
-                            handler.post(() -> viewHolder.progressBar.setProgress(progressStatus));
-                        }
-                        handler.post(() -> {
-                            // ---0 - VISIBLE; 4 - INVISIBLE; 8 - GONE---
-                            updateButton(viewHolder);
-                            progress = 1;
-                            progressStatus = 1;
-                        });
-                    }
+                // Synchronization lock for ProgressBar and Speech model
+                AtomicInteger transcriptionDone = new AtomicInteger(0);
 
-                    private int doSomeWork() {
+                new Thread(() -> {
+                    int maxSpeed = 10;
+                    int updateSpeed = maxSpeed;
+                    int sleepDurationMs = 20;
+                    int expectedProcessDurationSteps = (int) (dataModel.getDuration() / (1.5 * sleepDurationMs));
+
+                    viewHolder.progressBar.setMax(expectedProcessDurationSteps * maxSpeed);
+
+                    while (transcriptionDone.get() == 0) {
                         try {
-                            // ---simulate doing some work---
-                            Thread.sleep(50);
+                            Thread.sleep(sleepDurationMs);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        return ++progress;
+
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.6
+                                && updateSpeed == maxSpeed) {
+                            updateSpeed /= 2;
+                        }
+
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.8
+                                && updateSpeed > maxSpeed / 3) {
+                            updateSpeed /= 2;
+                        }
+
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.9
+                                && updateSpeed > maxSpeed / 6) {
+                            updateSpeed /= 2;
+                        }
+
+                        progressStatus += updateSpeed;
+
+                        handler.post(() -> viewHolder.progressBar.setProgress(progressStatus));
                     }
+                    recordingListActivity.runOnUiThread(() -> {
+                        updateButton(viewHolder);
+                    });
+                }).start();
+
+                new Thread(() -> {
+                    recordingListActivity.transcribeAudioFromDB(position);
+                    transcriptionDone.set(1);
                 }).start();
             });
         }

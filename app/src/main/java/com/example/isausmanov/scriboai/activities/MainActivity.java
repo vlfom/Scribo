@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.content.ContextCompat;
@@ -42,13 +43,19 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class MainActivity extends AppCompatActivity implements VoiceView.OnIClickedListener {
 
     // Constant values
     private static final int RECORD_AUDIO_REQUEST_CODE = 123;
 
-    public static LanguageModel languageModel;
+    private static ExecutorService executor = Executors.newSingleThreadExecutor();
+    public static Future<LanguageModel> languageModel;
 
     //VoiceView Stuff
     private VoiceView mVoiceView;
@@ -115,8 +122,17 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
             recordFlag = 0;
         });
 
-        // Initialize LanguageModel for SpeechRecognition model in background
-        new Thread(this::initializeLM).start();
+        Boolean isFirstRun = PreferenceManager.getDefaultSharedPreferences(getBaseContext())
+                .getBoolean("isFirstRun", true);
+
+        Log.d("CoolestModel", String.valueOf(isFirstRun));
+        if (isFirstRun) {
+            // Initialize LanguageModel for SpeechRecognition model in background
+            languageModel = executor.submit(initializeLM);
+        }
+
+        getSharedPreferences("PREFERENCE", MODE_PRIVATE).edit()
+                .putBoolean("isFirstRun", false).apply();
     }
 
     private void prepareUIforRecording() {
@@ -348,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
         mIsRecording = false;
     }
 
-    private void initializeLM() {
+    private Callable<LanguageModel> initializeLM = (Callable<LanguageModel>) () -> {
         // Read file from assets
         FileInputStream iStreamCorpus;
         FileInputStream iStreamPostag;
@@ -357,18 +373,21 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
             iStreamPostag = getApplicationContext().getAssets().openFd("postag_dot_data.txt").createInputStream();
         } catch (IOException e) {
             e.printStackTrace();
-            return;
+            return null;
         }
 
         Log.d("CoolModel", "Working!");
-        languageModel = new LanguageModel(
+        LanguageModel languageModel = new LanguageModel(
                 iStreamCorpus,
                 iStreamPostag,
                 "' abcdefghijklmnopqrstuvwxyz",
                 "abcdefghijklmnopqrstuvwxyz",
                 LanguageModel.NGRAM_BIGRAM
         );
-    }
+        Log.d("CoolModel", "Finished!");
+
+        return languageModel;
+    };
 
     // Permission request
     @RequiresApi(api = Build.VERSION_CODES.M)
