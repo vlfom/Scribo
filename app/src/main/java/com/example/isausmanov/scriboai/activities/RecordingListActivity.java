@@ -285,11 +285,10 @@ public class RecordingListActivity extends AppCompatActivity {
                 startActivity(i);
             }else {
                 // if recording has no transcription, do...
-
-
-
+                
                 Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
                 i.putExtra("AUDIO_URI", dataModel.getUri());
+                i.putExtra("AUDIO_NAME", dataModel.getName());
                 i.putExtra("AUDIO_TRANSCRIPTION", transcriptionWords);
                 i.putExtra("AUDIO_WORD_TIMES", transcriptionWordTimes);
                 i.putExtra("AUDIO_SPEAKER_CHANGED", speakerChanged);
