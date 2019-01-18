@@ -47,3 +47,6 @@
 1034	1901	0	../../../../src/main/libs/arm64-v8a/libhiai.so	2e48abcf6b2d6d18
 7	2065	0	CMakeFiles/hiai.dir/src/main/cpp/hiai_sync_jni.cpp.o	a8a1cb00fdfe3dd6
 2065	3356	0	../../../../src/main/libs/arm64-v8a/libhiai.so	2e48abcf6b2d6d18
+247	1298	0	CMakeFiles/hiai.dir/src/main/cpp/hiai_sync_jni.cpp.o	a8a1cb00fdfe3dd6
+4	1371	0	CMakeFiles/hiai.dir/src/main/cpp/hiai_async_jni.cpp.o	4559cfd8c2c7e6e6
+1371	2395	0	../../../../src/main/libs/arm64-v8a/libhiai.so	2e48abcf6b2d6d18

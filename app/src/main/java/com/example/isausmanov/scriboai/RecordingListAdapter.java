@@ -88,33 +88,25 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
 //        result.startAnimation(animation);
         lastPosition = position;
 
-        viewHolder.transcribe_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        if (dataModel.getTranscribed()) {
+            updateButton(viewHolder);
+        }
+        else {
+            viewHolder.transcribe_btn.setOnClickListener(v -> {
                 viewHolder.progressBar.setVisibility(View.VISIBLE);
                 viewHolder.transcribe_btn.setVisibility(View.GONE);
-
-
 
                 new Thread(new Runnable() {
                     public void run() {
                         while (progressStatus < 100) {
                             progressStatus = doSomeWork();
-                            handler.post(new Runnable() {
-                                public void run() {
-
-
-                                    viewHolder.progressBar.setProgress(progressStatus);
-                                }
-                            });
+                            handler.post(() -> viewHolder.progressBar.setProgress(progressStatus));
                         }
-                        handler.post(new Runnable() {
-                            public void run() {
-                                // ---0 - VISIBLE; 4 - INVISIBLE; 8 - GONE---
-                                updateButton(viewHolder);
-                                progress = 1;
-                                progressStatus = 1;
-                            }
+                        handler.post(() -> {
+                            // ---0 - VISIBLE; 4 - INVISIBLE; 8 - GONE---
+                            updateButton(viewHolder);
+                            progress = 1;
+                            progressStatus = 1;
                         });
                     }
 
@@ -128,9 +120,8 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
                         return ++progress;
                     }
                 }).start();
-
-            }
-        });
+            });
+        }
 
 
         //viewHolder.progressBar.setVisibility(View.GONE);
