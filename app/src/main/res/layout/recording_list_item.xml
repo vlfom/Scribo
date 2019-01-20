@@ -74,7 +74,7 @@
         android:padding="5dp"
         android:textSize="10sp"
         android:text="Transcribe"
-        android:background="#13a5ff"
+        android:background="#B71C1C"
         android:textColor="@android:color/white"
         android:focusable="false"/>
 

@@ -43,6 +43,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -279,9 +280,6 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     }
 
     private void saveRecording(String rec_name) {
-        Log.d(TAG_DB, fileName);
-        Log.d(TAG_DB, "total rec duration: " + totalRecDuration);
-
         db.recordingDao().insertAll(new RecordingDataModel(rec_name, totalRecDuration, fileName, false));
         db.close();
 
@@ -370,9 +368,11 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
         // Read file from assets
         FileInputStream iStreamCorpus;
         FileInputStream iStreamPostag;
+        FileInputStream iStreamSuggestions;
         try {
             iStreamCorpus = getApplicationContext().getAssets().openFd("data_10kwords_1mlines_postag.txt").createInputStream();
             iStreamPostag = getApplicationContext().getAssets().openFd("postag_dot_data.txt").createInputStream();
+            iStreamSuggestions = getApplicationContext().getAssets().openFd("data_suggestions.txt").createInputStream();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -382,6 +382,7 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
         LanguageModel languageModel = new LanguageModel(
                 iStreamCorpus,
                 iStreamPostag,
+                iStreamSuggestions,
                 "' abcdefghijklmnopqrstuvwxyz",
                 "abcdefghijklmnopqrstuvwxyz",
                 LanguageModel.NGRAM_BIGRAM

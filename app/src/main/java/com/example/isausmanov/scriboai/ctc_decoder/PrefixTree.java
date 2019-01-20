@@ -1,5 +1,6 @@
 package com.example.isausmanov.scriboai.ctc_decoder;
 
+import android.util.Log;
 import android.util.SparseArray;
 import java.util.*;
 

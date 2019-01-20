@@ -148,7 +148,7 @@ public class RecordingListActivity extends AppCompatActivity {
         }
 
         // Do BeamSearch
-        return WordBeamSearch.search(matrix, 50, languageModel);
+        return WordBeamSearch.search(matrix, 100, languageModel);
     }
 
     private Pair<float[], Pair<double[][], Double>> getTranscriptionProbabilities(String fileURI) {
@@ -261,15 +261,12 @@ public class RecordingListActivity extends AppCompatActivity {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            fetchRecordings();
             dataModel = dataModels.get(position);
 
             ArrayList<String> transcriptionWords = null;
             ArrayList<Integer> transcriptionWordTimes = null;
             ArrayList<Integer> speakerChanged = null;
-
-            db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "production")
-                    .allowMainThreadQueries()
-                    .build();
 
             boolean rec_transcribed = dataModel.getTranscribed();
 
@@ -282,6 +279,7 @@ public class RecordingListActivity extends AppCompatActivity {
                 i.putExtra("AUDIO_TRANSCRIPTION", dataModel.getTranscription_words());
                 i.putExtra("AUDIO_WORD_TIMES", dataModel.getTranscription_word_times());
                 i.putExtra("AUDIO_SPEAKER_CHANGED", dataModel.getTranscription_speaker());
+                i.putExtra("AUDIO_DB_POSITION", position);
                 startActivity(i);
             }else {
                 // if recording has no transcription, do...
@@ -362,7 +360,8 @@ public class RecordingListActivity extends AppCompatActivity {
         speakerChanged = new ArrayList<>(
                 Collections.nCopies(transcriptionWords.size(), 0)
         );
-        speakerChanged.set(0, 1);
+        if (!speakerChanged.isEmpty())
+            speakerChanged.set(0, 1);
 
         int wordToBegin = Integer.MAX_VALUE, wordToEnd = -1;
         for (int i = 0; i < transcriptionWordTimes.size(); ++i) {

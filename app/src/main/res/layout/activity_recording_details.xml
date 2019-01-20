@@ -46,37 +46,46 @@
         android:layout_height="wrap_content"
         android:layout_weight="0"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="horizontal">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/recording_details_play_button"
+                android:onClick="startPlayback"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_play"
+                android:layout_marginStart="30dp"
+                android:layout_marginBottom="20dp" />
+
+            <Button
+                android:id="@+id/recording_details_pause_button"
+                android:onClick="pausePlayback"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_pause"
+                android:visibility="gone"
+                android:layout_marginStart="30dp"
+                android:layout_marginBottom="20dp" />
+        </RelativeLayout>
 
         <SeekBar
             android:id="@+id/recording_details_seek_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"/>
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="10dp"
+            android:thumb="@drawable/seek_thumb"
+            android:progressTint="#B71C1C"
+            />
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <Button
-                android:id="@+id/recording_details_play_button"
-                android:onClick="startPlayback"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:background="@mipmap/ic_play_button"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="20dp"
-                android:layout_marginStart="130dp"/>
-
-            <Button
-                android:id="@+id/recording_details_pause_button"
-                android:onClick="pausePlayback"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:background="@mipmap/ic_pause_button"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="20dp"
-                android:layout_marginStart="190dp"/>
 
             <TextView
                 android:id="@+id/recording_details_time"

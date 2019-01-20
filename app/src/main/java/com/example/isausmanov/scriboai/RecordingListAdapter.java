@@ -46,14 +46,22 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
     }
 
     @Override
+    public int getViewTypeCount() {
+        return getCount();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position;
+    }
+
+    @Override
     public void onClick(View v) {
         int position = (Integer) v.getTag();
         Object object = getItem(position);
         //RecordingDataModel reco = getItem(position);
         RecordingDataModel dataModel = (RecordingDataModel) object;
     }
-
-    private int lastPosition = -1;
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -66,7 +74,6 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
         final View result;
 
         if (convertView == null) {
-
             viewHolder = new ViewHolder();
             LayoutInflater inflater = LayoutInflater.from(getContext());
             convertView = inflater.inflate(R.layout.recording_list_item, parent, false);
@@ -90,12 +97,10 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
 
 //        Animation animation = AnimationUtils.loadAnimation(context, (position > lastPosition) ? R.anim.up_from_bottom : R.anim.down_from_top);
 //        result.startAnimation(animation);
-        lastPosition = position;
 
-        if (dataModel.getTranscribed()) {
-            updateButton(viewHolder);
-        }
-        else {
+        updateButton(viewHolder, dataModel.getTranscribed(), ""+position);
+
+        if (!dataModel.getTranscribed()) {
             viewHolder.transcribe_btn.setOnClickListener(v -> {
                 RecordingListActivity recordingListActivity = (RecordingListActivity) parent.getContext();
 
@@ -112,6 +117,7 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
                     int expectedProcessDurationSteps = (int) (dataModel.getDuration() / (1.5 * sleepDurationMs));
 
                     viewHolder.progressBar.setMax(expectedProcessDurationSteps * maxSpeed);
+                    viewHolder.progressBar.setProgress(0);
 
                     while (transcriptionDone.get() == 0) {
                         try {
@@ -125,17 +131,17 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
                             updateSpeed /= 2;
                         }
 
-                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.7
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.8
                                 && updateSpeed > maxSpeed / 3) {
                             updateSpeed /= 2;
                         }
 
-                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.8
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.9
                                 && updateSpeed > maxSpeed / 6) {
                             updateSpeed /= 2;
                         }
 
-                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.9
+                        if (progressStatus * 1.0 / (expectedProcessDurationSteps * maxSpeed) > 0.95
                                 && updateSpeed > maxSpeed / 10) {
                             updateSpeed /= 2;
                         }
@@ -145,7 +151,7 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
                         handler.post(() -> viewHolder.progressBar.setProgress(progressStatus));
                     }
                     recordingListActivity.runOnUiThread(() -> {
-                        updateButton(viewHolder);
+                        updateButton(viewHolder, true, "huy");
                     });
                 }).start();
 
@@ -168,11 +174,17 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
         return convertView;
     }
 
-    private void updateButton(ViewHolder v){
-        v.progressBar.setVisibility(View.GONE);
-        v.transcribe_btn.setVisibility(View.VISIBLE);
-        v.transcribe_btn.setText("PROCESSED");
-        v.transcribe_btn.setBackgroundColor(ContextCompat.getColor(context, R.color.colorGray));
-        v.transcribe_btn.setEnabled(false);
+    private void updateButton(ViewHolder v, boolean isTranscribed, String s){
+        if (isTranscribed) {
+            v.progressBar.setVisibility(View.GONE);
+            v.transcribe_btn.setVisibility(View.VISIBLE);
+            v.transcribe_btn.setText("PROCESSED");
+            v.transcribe_btn.setBackgroundColor(ContextCompat.getColor(context, R.color.colorGray));
+            v.transcribe_btn.setEnabled(false);
+        }
+        else {
+            v.progressBar.setVisibility(View.GONE);
+            v.transcribe_btn.setVisibility(View.VISIBLE);
+        }
     }
 }

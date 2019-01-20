@@ -24,6 +24,10 @@
         </activity>
         <activity android:name=".activities.RecordingListActivity" />
         <activity android:name=".activities.RecordingDetailsActivity"></activity>
+
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
     </application>
 
 </manifest>
