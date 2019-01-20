@@ -130,8 +130,6 @@ public class RecordingDetailsActivity extends AppCompatActivity {
 
         this.audioName = (String) getIntent().getSerializableExtra("AUDIO_NAME");
 
-        setTranscriptionContent(this.transcriptionWords, null);
-
         buttonShare.setOnClickListener(v -> {
             Intent i = new Intent(Intent.ACTION_SEND);
             i.setType("message/rfc822");
