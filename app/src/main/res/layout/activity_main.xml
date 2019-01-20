@@ -84,4 +84,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <TextView
+        android:id="@+id/scriboTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="20dp"
+        android:fontFamily="sans-serif"
+        android:text="Audio Transcriber"
+        android:textColor="@color/colorBlack"
+        android:textSize="23dp"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </android.support.constraint.ConstraintLayout>

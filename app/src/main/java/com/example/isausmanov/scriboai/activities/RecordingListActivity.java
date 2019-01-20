@@ -275,6 +275,7 @@ public class RecordingListActivity extends AppCompatActivity {
 
                 //Log.d("DB_TEST", dataModel.getTranscription_words().get(5) + "  " + dataModel.getTranscription_word_times().get(5).toString());
                 Intent i = new Intent(RecordingListActivity.this, RecordingDetailsActivity.class);
+                i.putExtra("AUDIO_NAME", dataModel.getName());
                 i.putExtra("AUDIO_URI", dataModel.getUri());
                 i.putExtra("AUDIO_TRANSCRIPTION", dataModel.getTranscription_words());
                 i.putExtra("AUDIO_WORD_TIMES", dataModel.getTranscription_word_times());

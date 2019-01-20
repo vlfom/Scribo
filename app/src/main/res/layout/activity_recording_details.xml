@@ -24,6 +24,17 @@
             android:text="Recording"
             android:textColor="@color/colorPrimary"
             android:textSize="18dp" />
+
+        <Button
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:id="@+id/share_btn"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginRight="20dp"
+            android:drawableTop="@drawable/ic_share_black_24dp"
+            android:drawableTint="@color/colorAccent"
+            android:layout_gravity="right"
+            />
     </android.support.v7.widget.Toolbar>
 
     <LinearLayout

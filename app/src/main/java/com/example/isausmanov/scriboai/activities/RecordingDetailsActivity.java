@@ -52,6 +52,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Handler threadHandler = new Handler();
     private MediaPlayer mediaPlayer;
+    private Button buttonShare;
 
     private ArrayList<RecordingDataModel> dataModels;
     private AppDatabase db;
@@ -60,6 +61,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
     private ArrayList<String> transcriptionWords;
     private ArrayList<Integer> transcriptionTimes;
     private ArrayList<Integer> transcriptionSpeakerChanged;
+    private String audioName;
 
     private int audioPosition;
 
@@ -83,6 +85,8 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         this.textTime = findViewById(R.id.recording_details_time);
         this.buttonPlay = findViewById(R.id.recording_details_play_button);
         this.buttonPause = findViewById(R.id.recording_details_pause_button);
+
+        this.buttonShare = findViewById(R.id.share_btn);
 
         this.seekBar = this.findViewById(R.id.recording_details_seek_bar);
         this.seekBar.setOnSeekBarChangeListener(new MySeekBarChangeListener());
@@ -123,6 +127,31 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         }
 
         fetchRecordings();
+
+        this.audioName = (String) getIntent().getSerializableExtra("AUDIO_NAME");
+
+        setTranscriptionContent(this.transcriptionWords, null);
+
+        buttonShare.setOnClickListener(v -> {
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("message/rfc822");
+            i.putExtra(Intent.EXTRA_EMAIL  , new String[]{""});
+            i.putExtra(Intent.EXTRA_SUBJECT, audioName);
+            i.putExtra(Intent.EXTRA_TEXT   , getPureText(transcriptionWords));
+            try {
+                startActivity(Intent.createChooser(i, "Send mail..."));
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(RecordingDetailsActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
+    // ["makes", "this"] => "makes this"
+    private String getPureText(ArrayList<String> transcriptionWords) {
+        String transcriptionText = "";
+        for(int i = 0; i < transcriptionWords.size(); i++) transcriptionText = transcriptionText + transcriptionWords.get(i) + " ";
+        return transcriptionText;
     }
 
     private void fetchRecordings() {
