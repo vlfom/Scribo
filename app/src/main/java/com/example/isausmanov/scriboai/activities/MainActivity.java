@@ -281,6 +281,8 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
     String TAG_DB = "db_saving";
     String TAG_Voice = "voice";
 
+
+
     // Start/Pause Audio recording
     @Override
     public void onHandleRecording() {
@@ -355,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements VoiceView.OnIClic
         FileInputStream iStreamPostag;
         FileInputStream iStreamSuggestions;
         try {
-            iStreamCorpus = getApplicationContext().getAssets().openFd("data_10kwords_50kfiles_postag.txt").createInputStream();
+            iStreamCorpus = getApplicationContext().getAssets().openFd("data_10kwords_1mlines_postag.txt").createInputStream();
             iStreamPostag = getApplicationContext().getAssets().openFd("postag_dot_data.txt").createInputStream();
             iStreamSuggestions = getApplicationContext().getAssets().openFd("data_suggestions.txt").createInputStream();
         } catch (IOException e) {
