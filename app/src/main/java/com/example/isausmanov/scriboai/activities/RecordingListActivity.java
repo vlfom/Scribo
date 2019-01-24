@@ -358,12 +358,6 @@ public class RecordingListActivity extends AppCompatActivity {
             }
         }
 
-        speakerChanged = new ArrayList<>(
-                Collections.nCopies(transcriptionWords.size(), 0)
-        );
-        if (!speakerChanged.isEmpty())
-            speakerChanged.set(0, 1);
-
         int wordToBegin = Integer.MAX_VALUE, wordToEnd = -1;
         for (int i = 0; i < transcriptionWordTimes.size(); ++i) {
             int frameNum = (int)(transcriptionWordTimes.get(i) / 1000 * 960 / 15.35);
@@ -395,11 +389,86 @@ public class RecordingListActivity extends AppCompatActivity {
         }
         for (int i = 0; i < differences.length; ++i) {
             differences[i] /= maxDifference;
-            if (differences[i] >= 5) {
-                speakerChanged.set(i + wordToBegin, 1);
+        }
+        Log.d("Coolest", Arrays.toString(differences));
+
+        // Moving average smoothing
+        int window_size_mov_avg = 3;
+        double[] norm_differences = new double[differences.length];
+        for (int i = 0; i < differences.length; ++i) {
+            double sumValue = 0;
+            int lr = Math.max(i - window_size_mov_avg, 0);
+            int rr = Math.min(i + window_size_mov_avg + 1, differences.length);
+            for (int j = lr; j < rr; ++j) {
+                sumValue += differences[j];
+            }
+            norm_differences[i] = sumValue / (rr - lr + 1);
+        }
+
+        Log.d("Coolest", Arrays.toString(norm_differences));
+
+        // Peak detection
+        int min_border = 3;
+        int window_size_peak_det = 6;
+        int max_errors = 2;
+        ArrayList<Integer> peaks = new ArrayList<>();
+        for (int i = min_border; i < norm_differences.length - min_border - 1; ++i) {
+
+            int errors = 0;
+            for (int j = Math.max(i - window_size_peak_det, 0); j < i; ++j) {
+                if (norm_differences[j + 1] < norm_differences[j]) {
+                    errors += 1;
+                    if (errors > max_errors) {
+                        break;
+                    }
+                }
+            }
+            for (int j = i + 1; j < Math.min(i + window_size_peak_det + 1, norm_differences.length); ++j) {
+                if (norm_differences[j] >
+                        norm_differences[j - 1]) {
+                    errors += 1;
+                    if (errors > max_errors) {
+                        break;
+                    }
+                }
+            }
+
+            if (errors <= max_errors) {
+                peaks.add(i);
             }
         }
-        Log.d("Coolest", Arrays.toString(new ArrayList[]{transcriptionWords}));
+
+        Log.d("Coolest", Arrays.toString(new ArrayList[]{peaks}));
+
+        // Merge consecutive peaks
+        ArrayList<Integer> merged_peaks = new ArrayList<>();
+        int last_index = 0;
+        int index = 0;
+        while (index + 1 < peaks.size()) {
+            if (peaks.get(index + 1) != peaks.get(index) + 1) {
+                if (merged_peaks.isEmpty() || peaks.get(last_index) - merged_peaks.get(merged_peaks.size() - 1) > 5) {
+                    merged_peaks.add(peaks.get(last_index));
+                }
+                last_index = index + 1;
+            }
+            index += 1;
+        }
+
+        if (peaks.size() > 0) {
+            merged_peaks.add(peaks.get(last_index));
+        }
+
+        speakerChanged = new ArrayList<>(
+                Collections.nCopies(transcriptionWords.size(), 0)
+        );
+        if (!speakerChanged.isEmpty())
+            speakerChanged.set(0, 1);
+
+        for (Integer peak : merged_peaks) {
+            speakerChanged.set(peak + wordToBegin - 2, 1);
+        }
+
+        Log.d("Coolest", Arrays.toString(new ArrayList[]{merged_peaks}));
 
         LanguageModel languageModel = null;
         try {
@@ -413,17 +482,12 @@ public class RecordingListActivity extends AppCompatActivity {
         for (int i = 5; i < transcriptionWords.size(); ++i) {
             long hash = 0;
             for (int j = i-5; j <= i; ++j) {
-//                    Log.d("Coolest", String.valueOf(languageModel));
-//                    Log.d("Coolest", String.valueOf(languageModel.wordToPostag));
-//                    Log.d("Coolest", transcriptionWords.get(j));
                 hash = hash * 35 + languageModel.wordToPostag.get(transcriptionWords.get(j));
             }
-            Log.d("Coolest", String.valueOf(hash));
             if (languageModel.posTagSequenceDotHash.contains(hash)) {
                 needDotAfter[i - 3] = 1;
             }
         }
-        Log.d("Coolest", String.valueOf(languageModel.posTagSequenceDotHash.contains(1385650630L)));
 
         // Capitalize 1st word
         if (transcriptionWords.size() > 0)
@@ -443,7 +507,6 @@ public class RecordingListActivity extends AppCompatActivity {
             transcriptionWords.set(transcriptionWords.size() - 1,
                     transcriptionWords.get(transcriptionWords.size() - 1) + ".");
 
-        Log.d("Coolest", Arrays.toString(differences));
         Log.d("Coolest", Arrays.toString(new ArrayList[]{speakerChanged}));
 
         // Update the recording in the DB

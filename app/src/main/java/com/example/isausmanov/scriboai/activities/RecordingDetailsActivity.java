@@ -195,10 +195,10 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         for (int i = 0; i < words.size(); ++i) {
             if (transcriptionSpeakerChanged.get(i) == 1) {
                 if (i > 0) {
-                    text.append("<br><div style=\"margin-bottom: 10px; margin-top: 10px;\">Speaker</div>");
+                    text.append("<br><div class=\"speaker\" style=\"margin-bottom: 10px; margin-top: 10px;\">Speaker</div>");
                 }
                 else {
-                    text.append("<div style=\"margin-bottom: 10px;\">Speaker</div>");
+                    text.append("<div class=\"speaker\" style=\"margin-bottom: 10px;\">Speaker</div>");
                 }
             }
             word = words.get(i);
@@ -231,7 +231,6 @@ public class RecordingDetailsActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public String getSuggestions(String word) {
-            Log.d("ebanyy", word);
             String[] suggestions = languageModel.getSuggestions(word);
             return suggestions[0] + " " + suggestions[1] + " " + suggestions[2];
         }
