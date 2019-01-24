@@ -443,7 +443,7 @@ public class RecordingListActivity extends AppCompatActivity {
         while (index + 1 < peaks.size()) {
             if (peaks.get(index + 1) != peaks.get(index) + 1) {
                 if (merged_peaks.isEmpty() || peaks.get(last_index) - merged_peaks.get(merged_peaks.size() - 1) > 5) {
-                    merged_peaks.add((peaks.get(last_index) + peaks.get(index)) / 2);
+                    merged_peaks.add(peaks.get(last_index));
                 }
                 last_index = index + 1;
             }
@@ -451,7 +451,7 @@ public class RecordingListActivity extends AppCompatActivity {
         }
 
         if (peaks.size() > 0) {
-            merged_peaks.add((peaks.get(last_index) + peaks.get(index)) / 2);
+            merged_peaks.add(peaks.get(last_index));
         }
 
         speakerChanged = new ArrayList<>(
