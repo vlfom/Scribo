@@ -405,8 +405,6 @@ public class RecordingListActivity extends AppCompatActivity {
             norm_differences[i] = sumValue / (rr - lr + 1);
         }
 
-        Log.d("Coolest", Arrays.toString(norm_differences));
-
         // Peak detection
         int min_border = 3;
         int window_size_peak_det = 6;
@@ -438,8 +436,6 @@ public class RecordingListActivity extends AppCompatActivity {
             }
         }
 
-        Log.d("Coolest", Arrays.toString(new ArrayList[]{peaks}));
-
         // Merge consecutive peaks
         ArrayList<Integer> merged_peaks = new ArrayList<>();
         int last_index = 0;
@@ -447,7 +443,7 @@ public class RecordingListActivity extends AppCompatActivity {
         while (index + 1 < peaks.size()) {
             if (peaks.get(index + 1) != peaks.get(index) + 1) {
                 if (merged_peaks.isEmpty() || peaks.get(last_index) - merged_peaks.get(merged_peaks.size() - 1) > 5) {
-                    merged_peaks.add(peaks.get(last_index));
+                    merged_peaks.add((peaks.get(last_index) + peaks.get(index)) / 2);
                 }
                 last_index = index + 1;
             }
@@ -455,7 +451,7 @@ public class RecordingListActivity extends AppCompatActivity {
         }
 
         if (peaks.size() > 0) {
-            merged_peaks.add(peaks.get(last_index));
+            merged_peaks.add((peaks.get(last_index) + peaks.get(index)) / 2);
         }
 
         speakerChanged = new ArrayList<>(
@@ -465,7 +461,7 @@ public class RecordingListActivity extends AppCompatActivity {
             speakerChanged.set(0, 1);
 
         for (Integer peak : merged_peaks) {
-            speakerChanged.set(peak + wordToBegin - 2, 1);
+            speakerChanged.set(peak + wordToBegin, 1);
         }
 
         Log.d("Coolest", Arrays.toString(new ArrayList[]{merged_peaks}));
