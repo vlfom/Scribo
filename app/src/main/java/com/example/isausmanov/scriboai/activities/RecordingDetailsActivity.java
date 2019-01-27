@@ -216,7 +216,6 @@ public class RecordingDetailsActivity extends AppCompatActivity {
 
         text.append(footer);
 
-
         textTranscription.loadDataWithBaseURL(
                 "file:///android_asset/", text.toString(),
                 "text/html; charset=utf-8", "utf-8", null);

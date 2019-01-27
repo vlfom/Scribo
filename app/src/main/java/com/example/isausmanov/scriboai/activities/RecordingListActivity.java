@@ -405,12 +405,14 @@ public class RecordingListActivity extends AppCompatActivity {
             norm_differences[i] = sumValue / (rr - lr + 1);
         }
 
+        Log.d("Coolest", Arrays.toString(norm_differences));
+
         // Peak detection
-        int min_border = 3;
+        int min_border = 2;
         int window_size_peak_det = 6;
         int max_errors = 2;
         ArrayList<Integer> peaks = new ArrayList<>();
-        for (int i = min_border; i < norm_differences.length - min_border - 1; ++i) {
+        for (int i = min_border; i < norm_differences.length - min_border; ++i) {
 
             int errors = 0;
             for (int j = Math.max(i - window_size_peak_det, 0); j < i; ++j) {
@@ -435,6 +437,8 @@ public class RecordingListActivity extends AppCompatActivity {
                 peaks.add(i);
             }
         }
+
+        Log.d("Coolest", Arrays.toString(new ArrayList[]{peaks}));
 
         // Merge consecutive peaks
         ArrayList<Integer> merged_peaks = new ArrayList<>();
@@ -461,7 +465,7 @@ public class RecordingListActivity extends AppCompatActivity {
             speakerChanged.set(0, 1);
 
         for (Integer peak : merged_peaks) {
-            speakerChanged.set(peak + wordToBegin, 1);
+            speakerChanged.set(peak + wordToBegin - 1, 1);
         }
 
         Log.d("Coolest", Arrays.toString(new ArrayList[]{merged_peaks}));
@@ -473,8 +477,8 @@ public class RecordingListActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // Add dots
         int[] needDotAfter = new int[transcriptionWords.size()];
+        // Add dots
         for (int i = 5; i < transcriptionWords.size(); ++i) {
             long hash = 0;
             for (int j = i-5; j <= i; ++j) {
@@ -490,6 +494,24 @@ public class RecordingListActivity extends AppCompatActivity {
             transcriptionWords.set(0,
                     transcriptionWords.get(0).substring(0, 1).toUpperCase() + transcriptionWords.get(0).substring(1));
 
+        // Add dot in the end
+        if (transcriptionWords.size() > 0)
+            transcriptionWords.set(transcriptionWords.size() - 1,
+                    transcriptionWords.get(transcriptionWords.size() - 1) + ".");
+
+        // Add dots and capitalization because of speaker change
+        for (Integer peak : merged_peaks) {
+            speakerChanged.set(peak + wordToBegin - 1, 1);
+
+            // Capitalize word
+            transcriptionWords.set(peak + wordToBegin - 1,
+                    transcriptionWords.get(peak + wordToBegin - 1).substring(0, 1).toUpperCase() +
+                            transcriptionWords.get(peak + wordToBegin - 1).substring(1));
+
+            // Add dot
+            needDotAfter[peak + wordToBegin - 2] = 1;
+        }
+
         for (int i = 0; i < transcriptionWords.size(); ++i) {
             if (needDotAfter[i] == 1) {
                 transcriptionWords.set(i, transcriptionWords.get(i) + ".");
@@ -497,11 +519,6 @@ public class RecordingListActivity extends AppCompatActivity {
                         transcriptionWords.get(i + 1).substring(0, 1).toUpperCase() + transcriptionWords.get(i + 1).substring(1));
             }
         }
-
-        // Add dot in the end
-        if (transcriptionWords.size() > 0)
-            transcriptionWords.set(transcriptionWords.size() - 1,
-                    transcriptionWords.get(transcriptionWords.size() - 1) + ".");
 
         Log.d("Coolest", Arrays.toString(new ArrayList[]{speakerChanged}));
 
