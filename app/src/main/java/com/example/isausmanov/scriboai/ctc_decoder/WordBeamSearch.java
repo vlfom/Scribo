@@ -25,7 +25,7 @@ public class WordBeamSearch {
 
             for (Beam beam : bestBeams) {
                 double prNonBlank = 0;
-                if (!beam.text.equals("")) {
+                if (beam.text.length() > 0) {
                     int labelIdx = chars.indexOf(beam.text.charAt(beam.text.length() - 1));
                     prNonBlank = beam.prNonBlank * mat[t][labelIdx];
                 }
@@ -35,7 +35,7 @@ public class WordBeamSearch {
                 List<Character> nextChars = beam.getNextChars();
                 for (Character c : nextChars) {
                     int labelIdx = chars.indexOf(c);
-                    if (!beam.text.equals("") && beam.text.charAt(beam.text.length() - 1) == c) {
+                    if (beam.text.length() > 0 && beam.text.charAt(beam.text.length() - 1) == c) {
                         prNonBlank = mat[t][labelIdx] * beam.prBlank;
                     }
                     else {
@@ -50,6 +50,6 @@ public class WordBeamSearch {
         Beam bestBeam = last.getBestBeams(1).get(0);
         bestBeam.completeBeam(languageModel);
 
-        return new Pair<>(bestBeam.text, bestBeam.time);
+        return new Pair<>(bestBeam.text.toString(), bestBeam.time);
     }
 }

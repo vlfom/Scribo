@@ -98,9 +98,9 @@ public class RecordingListAdapter extends ArrayAdapter<RecordingDataModel> imple
 //        Animation animation = AnimationUtils.loadAnimation(context, (position > lastPosition) ? R.anim.up_from_bottom : R.anim.down_from_top);
 //        result.startAnimation(animation);
 
-        updateButton(viewHolder, dataModel.getTranscribed(), ""+position);
+        updateButton(viewHolder, false, ""+position);
 
-        if (!dataModel.getTranscribed()) {
+        if (true) {
             viewHolder.transcribe_btn.setOnClickListener(v -> {
                 RecordingListActivity recordingListActivity = (RecordingListActivity) parent.getContext();
 

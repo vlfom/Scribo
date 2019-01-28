@@ -424,8 +424,7 @@ public class RecordingListActivity extends AppCompatActivity {
                 }
             }
             for (int j = i + 1; j < Math.min(i + window_size_peak_det + 1, norm_differences.length); ++j) {
-                if (norm_differences[j] >
-                        norm_differences[j - 1]) {
+                if (norm_differences[j] > norm_differences[j - 1]) {
                     errors += 1;
                     if (errors > max_errors) {
                         break;
@@ -486,6 +485,12 @@ public class RecordingListActivity extends AppCompatActivity {
             }
             if (languageModel.posTagSequenceDotHash.contains(hash)) {
                 needDotAfter[i - 3] = 1;
+            }
+        }
+
+        for (int i = 0; i < transcriptionWords.size(); ++i) {
+            if (transcriptionWords.get(i).equals("i")) {
+                transcriptionWords.set(i, "I");
             }
         }
 

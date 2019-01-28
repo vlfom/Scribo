@@ -6,4 +6,4 @@
 /.idea/workspace.xml
 /build
 /captures
-/app/.externalNativeBuild
+app/.externalNativeBuild
