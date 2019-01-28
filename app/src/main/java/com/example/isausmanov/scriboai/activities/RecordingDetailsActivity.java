@@ -133,7 +133,7 @@ public class RecordingDetailsActivity extends AppCompatActivity {
         buttonShare.setOnClickListener(v -> {
             Intent i = new Intent(Intent.ACTION_SEND);
             i.setType("message/rfc822");
-            i.putExtra(Intent.EXTRA_EMAIL  , new String[]{""});
+            i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"isa.usmanov@tum.de"});
             i.putExtra(Intent.EXTRA_SUBJECT, audioName);
             i.putExtra(Intent.EXTRA_TEXT   , getPureText(transcriptionWords));
             try {
